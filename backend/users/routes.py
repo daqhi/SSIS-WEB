@@ -1,0 +1,89 @@
+from flask import Blueprint, jsonify, request
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from config import DB_CONFIG
+
+users_bp = Blueprint("users_bp", __name__, url_prefix="/api")
+
+def get_db_connection():
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        print("Database connection successful!")
+        return conn
+    except Exception as e:
+        print(f"Database connection failed: {e}")
+        raise
+
+
+# REGISTER USER
+@users_bp.route("/register", methods=["POST"])
+def register_user():
+    try:
+        data = request.get_json()
+        username = data.get("username")
+        useremail = data.get("email")
+        userpass = data.get("password")
+
+        if not username or not useremail or not userpass:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            INSERT INTO users (username, useremail, userpass)
+            VALUES (%s, %s, %s)
+            RETURNING userid;
+            """,
+            (username, useremail, userpass)
+        )
+        user_id = cur.fetchone()[0]
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        print(f"User {username} registered successfully with ID {user_id}")
+        return jsonify({"message": "User registered successfully!", "userid": user_id}), 201
+
+    except Exception as e:
+        print(f"Error in register_user: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# GET USERS
+@users_bp.route("/users", methods=["GET"])
+def get_users():
+    try:
+        print("GET /api/users endpoint hit!")
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cur.execute("SELECT * FROM users;")
+        users = cur.fetchall()
+        
+        print(f"Found {len(users)} users")
+        print(f"Users data: {users}")
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify(users), 200
+        
+    except Exception as e:
+        print(f"Error in get_users: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+#sign in wi google
+#cloudinary for photos
+
+
+#logic for sign in 
+
+# chekc for usrname and pass, if it

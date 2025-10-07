@@ -6,7 +6,7 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import SignUpImg from "../../static/icons/react.svg";
 import "../../static/css/entry.css";
 
-library.add(faGoogle);
+
 
 function SignIn() {
     const navigate = useNavigate();
