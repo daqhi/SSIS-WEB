@@ -3,7 +3,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from config import DB_CONFIG
 
-programs_bp = Blueprint("programs_bp", __name__, url_prefix="/programs")
+programs_bp = Blueprint("programs_bp", __name__, url_prefix="/api")
 
 def get_db_connection():
     try:
@@ -17,8 +17,8 @@ def get_db_connection():
 
 
 # for adding programs
-@colleges_bp.route("/add_program", methods=["POST"])
-def register_user():
+@programs_bp.route("/add_program", methods=["POST"])
+def add_program():
     try:
         data = request.get_json()
         programcode = data.get('programcode')
@@ -32,7 +32,7 @@ def register_user():
         cur = conn.cursor()
 
         cur.execute(
-            """"
+            """
             INSERT INTO programs (collegecode, programcode, programname)
             VALUES (%s, %s, %s)
             RETURNING programcode;
@@ -56,25 +56,25 @@ def register_user():
 
 
 
-# list colleges
+# list programs
 @programs_bp.route("/program_list", methods=['GET'])
 def get_programs():
     try:
-        print("📥 GET /programs/program_list endpoint hit!")
+        print("GET /api/program_list endpoint hit!")
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
         cur.execute("SELECT * FROM programs;")
-        users = cur.fetchall()
+        programs = cur.fetchall()
         
-        print(f"📊 Found {len(users)} users")
-        print(f"📄 Users data: {users}")
+        print(f"Found {len(programs)} prorgams")
+        print(f"Users data: {programs}")
         
         cur.close()
         conn.close()
         
-        return jsonify(users), 200
+        return jsonify(programs), 200
         
     except Exception as e:
-        print(f"❌ Error in get_users: {e}")
+        print(f"Error in get_programs: {e}")
         return jsonify({"error": str(e)}), 500

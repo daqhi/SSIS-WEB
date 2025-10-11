@@ -8,14 +8,14 @@ colleges_bp = Blueprint("colleges_bp", __name__, url_prefix="/api")
 def get_db_connection():
     try:
         conn = psycopg2.connect(**DB_CONFIG)
-        print("✅ Database connection successful")
+        print("Database connection successful")
         return conn
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
+        print(f"Database connection failed: {e}")
         raise
 
 
-# ✅ ADD COLLEGE
+# for adding colleges
 @colleges_bp.route("/add_college", methods=["POST"])
 def add_college():
     try:
@@ -44,19 +44,19 @@ def add_college():
         cur.close()
         conn.close()
 
-        print(f"✅ College '{collegename}' added successfully!")
+        print(f"College '{collegename}' added successfully!")
         return jsonify({"message": "College registered successfully!", "collegecode": college_id}), 201
 
     except Exception as e:
-        print(f"❌ Error in add_college: {e}")
+        print(f"Error in add_college: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-# ✅ LIST COLLEGES
+# LIST COLLEGES
 @colleges_bp.route("/college_list", methods=["GET"])
 def get_colleges():
     try:
-        print("📋 GET /api/college_list endpoint hit!")
+        print("GET /api/college_list endpoint hit!")
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -69,5 +69,5 @@ def get_colleges():
         return jsonify(colleges), 200
 
     except Exception as e:
-        print(f"❌ Error in get_colleges: {e}")
+        print(f"Error in get_colleges: {e}")
         return jsonify({"error": str(e)}), 500

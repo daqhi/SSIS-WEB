@@ -1,0 +1,502 @@
+@font-face {
+    font-family: 'Charter';
+    src: url('/src/assets/fonts/charter/charter_bold.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/src/assets/fonts/montserrat/Montserrat-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family:'Montserrat', 'Charter';
+    max-width:100%;
+    background: #ffffff;
+    display: block;
+}
+
+
+.directory-content {
+    background-color: #ffffff;
+    display: flex;
+    align-items: flex-start;
+    height: 100%;
+}
+
+.directory-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.directory-wrapper{
+    margin: 30px 77px 0 77px;
+    flex:2;
+}
+
+.directory-layout > *:first-child {
+    flex: 2;
+}
+
+
+.area-main-directory {
+    border: 0 none #ffffff00;
+    background: #ffffff;
+    width: 100%;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #666;
+} .breadcrumb button {
+    margin-left: 10px;
+    border: 1px solid #FCA311;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    font-family: 'Montserrat';
+    background-color: #ffffff;
+    color: #FCA311;
+    border-color: #FCA311;
+    cursor: pointer;
+} .breadcrumb button:hover {
+    transition: all 0.3s ease;
+    transform: scale(1.1);
+    box-shadow: 0 0 5px rgb(252, 163, 17);
+}
+
+
+
+
+
+
+
+
+.breadcrumb-item {
+    cursor: pointer;
+}.breadcrumb-item.active {
+    font-weight: bold;
+    color: #FCA311;
+}
+
+.breadcrumb-separator {
+    margin: 0 8px;
+    color: #aaa;
+}
+
+.breadcrumb-line {
+    flex-grow: 1;              
+    height: 1px;
+    background-color: #ddd;    
+    margin-left: 10px;         
+}
+
+
+
+
+.form-header {
+    font-size: 25px;
+    color:#4d4d4d;
+    margin-top: 0px;
+    margin-bottom: 10px;
+}
+
+
+.directory-header {
+    font-size: 25px;
+    margin-top: 30px;
+    margin-bottom: 10px;
+    color:#4d4d4d;
+}
+
+.add-button {
+    font-size: small;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-family: 'Montserrat';
+    border-width: 1px;
+    border-style: solid;
+    background-color: #FCA311;
+    color: white;
+    border-color: #FCA311;
+    cursor: pointer;
+}.add-button:hover {
+    background-color: #e59410;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}.add-button:focus {
+    outline: none;
+    box-shadow: none;  
+}
+
+
+
+
+
+.functions {
+    margin: 30px 0px 40px 0;
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+.function-item,
+.function-search-item {
+    font-size: small;
+    border: none; 
+    width: 150px;
+    margin-right: 5px;
+    flex-shrink: 0;
+}.function-search-item {
+    width: 250px;
+}
+
+.function-item .custom-select {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+/* Actual select dropdown */
+.function-item select {
+    width: 100%;
+    padding: 5px 28px 5px 8px; 
+    font-size: inherit; 
+    border: 1px solid #aaa;
+    background-color: #fff;
+    margin: 0;
+    cursor: pointer;
+    border-radius: 0px;
+
+
+    /* Remove native dropdown arrow */
+    appearance: none;
+    -webkit-appearance: none; /* Safari / Chrome */
+    -moz-appearance: none;    /* Firefox */
+    background-image: none;   /* remove extra arrow in some browsers */
+}
+
+/* Icon inside the select */
+.function-item .dropdown-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #878787;
+    font-size: 14px;
+    height: 10px;
+    padding:0;
+}
+
+.function-item button {
+    font-family: 'Montserrat';
+    width: 80px;
+    height: 27px;
+    font-size: inherit;
+    font-weight: 600    ;
+    color: #ffffff;
+    padding: 5px 5px 5px 5px; 
+    margin: 5px 0 0 0;
+    border: 0px solid #FCA311;
+    background: #FCA311;
+
+}
+
+.search-area {
+    display: flex;
+    align-items: center;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #aaa;
+    padding: 5px;
+    height: 15px;
+} .search-area input {
+    border: none;
+    margin: 0px;
+    padding: 0px 0px 0px 6px;
+    max-width: 100%;
+} .search-area input:focus {
+    outline: none;
+    border: none;
+    box-shadow: none;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* table stuff */
+.table {
+    max-height: 460px;   
+    max-width: 100%;
+    overflow: auto; 
+    border: 1px solid #ddd;
+    font-size: 12px;
+    margin-top: 20px;
+}
+
+.table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead {
+    background-color: #ffffff; 
+    color: #ffffff;              
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1; 
+}
+
+.table thead th:nth-child(6) { width: 25%; }  /* ID */
+.table thead th:nth-child(8) { width: 12%; } /* Actions */
+
+.table th {
+    padding: 5px;
+    padding-left:10px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+}
+
+.table td {
+    padding: 3px;
+    padding-left: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.sort-button {
+    border: 0 none #ffffff00;
+    font-family: 'Montserrat';
+    background-color: #ffffff00;
+}
+
+
+.edit {
+    padding:2px;
+    padding-left:15px;
+    padding-right:15px;
+    margin-right: 5px;
+    margin-top: 3px;
+    margin-bottom: 3px;;
+    font-weight: bold;
+    color:#666;
+    background: #ffffff;
+    border-width: 1px;
+    border-radius:5px;
+    border-color:#aaa;
+    border-style: solid;
+    background:#ececec;
+}.edit:hover {
+    background:#d4d4d4;
+    box-shadow: #aaa 0px 0px 5px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.delete {
+    background: #ffffff;
+    border-width: 1px;
+    padding: 2px;
+    padding-left:15px;
+    padding-right:15px;
+    margin-bottom: 3px;
+    border-radius:5px;
+    border-color: #FCA311;
+    border-style: solid;
+    border-width: 1px;
+    font-weight: bold;
+    color: #FCA311;
+    position: relative;
+    overflow: visible;
+}.delete:hover {
+    background: #f7ddb3;
+    box-shadow: #aaa 0px 0px 5px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+
+
+
+
+
+
+
+/* FORM AREA */
+.area-main-form {
+    flex: 0.7;
+    background: #f8f8f8;
+    border: 0px solid #ddd;
+    padding: 85px 50px 0 50px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    height: 100%;
+    position: sticky;
+    top: 80px; /* adjust to navbar height */
+    border-left-width: 1px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+    width: 100%;
+} .form input {
+    border: solid 1px #828282;
+    border-radius: 0px;
+    height: 25px;
+    margin: 0;
+    width: 100%;
+} .form input:focus {
+    outline: none;
+} .form input:hover {
+    box-shadow: 0 0 5px rgba(144, 144, 144, 0.5);
+    transition: box-shadow 0.3s ease;
+} .form label {
+    color: #373737;
+    font-size: 15px;
+    width: 300px;
+    margin: 15px 0 10px 0;
+} 
+
+
+.form-wrapper {
+    flex: 1;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(50px);
+    transition: max-width 0.4s ease, opacity 0.3s ease, transform 0.4s ease;
+}
+
+.form-wrapper.open {
+    max-width: 400px;  /* final width */
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Make sure the form itself expands fully */
+.form-wrapper .area-main-form {
+    width: 75%;
+    height: 640px;
+}
+
+
+
+
+
+
+
+label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #6b6b6b;
+    margin-top: 0px;
+    margin-bottom: 5px;
+    display: inline-block;
+    width: 100px;
+}
+
+input {
+    font-size: small;
+    padding: 5px;
+    font-family: 'Montserrat';
+    border-style: solid;
+    border-width: 1px;
+    border-color: #aaa;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+select {
+    font-size: small;
+    padding: 5px;
+    font-family: 'Montserrat';
+    border-style: solid;
+    border-width: 1px;
+    border-color: #aaa;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    background: #fff;
+    appearance: none;           /* Removes default arrow in most browsers */
+    -webkit-appearance: none;   /* Removes default arrow in Safari/Chrome */
+    -moz-appearance: none;      /* Removes default arrow in Firefox */
+    background-image: url("data:image/svg+xml;charset=UTF-8,<svg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M6 8L0.803847 0.5L11.1962 0.5L6 8Z' fill='%23aaa'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px 12px;
+    cursor: pointer;
+    max-height: 3%;           /* Height of the closed select */
+    overflow-y: auto;
+}select:focus {
+    outline: none;
+    border-color: #939393;
+    box-shadow: 0 0 5px rgba(144, 144, 144, 0.5);
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+
+
+
+
+
+.add-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 100px;
+    margin-bottom: 35px;
+    width: 95%;
+} .add-button-container:hover {
+    box-shadow: 0 0 15px rgba(255, 187, 79, 0.5);
+    transition: box-shadow 0.3s ease; 
+}
+
+.add-student,
+.add-program,
+.add-college {
+    font-size: large;
+    font-weight: bold;
+    padding: 5px 10px;
+    font-family: 'Montserrat';
+    border: 1px solid #FCA311;
+    background-color: #FCA311;
+    color: white;
+    cursor: pointer;
+    width: 300px;
+}
+        
+.add-student:hover {
+    background-color: #ffb53e;
+    box-shadow: #aaa 0px 0px 5px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}.add-student:focus {
+    outline: none;
+    box-shadow: none;  
+}.add-student {
+    outline: none;
+    box-shadow: none;  
+}
+
+
+

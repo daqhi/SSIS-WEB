@@ -71,7 +71,7 @@ export default function SignUp() {
                         type="text"
                         value={userName}
                         onChange={(e) => setUserName(e.target.value)}
-                        placeholder="Username"
+                        placeholder="@username"
                         required
                         style={{ width: "100%", padding: "8px" }}
                     />
