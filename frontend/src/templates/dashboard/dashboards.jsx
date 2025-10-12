@@ -6,6 +6,7 @@ import Navbar from '/src/templates/components/navbar.jsx'
 function Dashboard() {
     return (
         <div>
+            <Navbar />
             <div className='main-ctn'>
                 
                 <div className='header-ctn'>

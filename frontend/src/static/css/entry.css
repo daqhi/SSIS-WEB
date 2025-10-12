@@ -12,6 +12,13 @@
     font-style: normal;
 }
 
+/* :root{
+    display: block;
+    margin: 50px 50px 50px 50px;
+    display: flex;
+    align-items: center;
+} */
+
 .page {
     opacity: 0;
     transform: translateY(10px);
@@ -25,14 +32,18 @@
 
 
 body {
-    max-width: 100%;
-    max-height: 100%;
-    background:#d8d8d8;
+    width: 100%;
+    height: 100%;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Montserrat';
+}
+
+.entire-page {
+    height: 100%;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
 .main-container {
@@ -41,9 +52,10 @@ body {
     justify-content: center;
     gap: 50px;
     padding: 20px;
-    background: #ffffff;  
     border-radius: 16px;
     max-width: 800px;
+    background-color:#ffffff ;
+    box-shadow: 0 0 5 rgba(0, 0, 0, 0.1);
 }
 
 .side-image {

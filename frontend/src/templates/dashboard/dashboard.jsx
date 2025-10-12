@@ -1,12 +1,13 @@
 import '/src/static/css/dashboard.css'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuildingColumns, faBook, faGraduationCap } from "@fortawesome/free-solid-svg-icons";
-
+import Navbar from '../components/navbar';
 
 
 function Dashboard() {
     return (
         <div>
+            <Navbar />
             {/* MAIN CONTENT */}
             <div className="main-content">
                 {/* NAVBAR */}

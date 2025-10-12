@@ -23,6 +23,11 @@ body {
     display: block;
 }
 
+.entire-container {
+    height: 100%;
+    width: 100%;
+}
+
 
 .directory-content {
     background-color: #ffffff;
@@ -59,7 +64,9 @@ body {
     align-items: center;
     font-size: 14px;
     color: #666;
-} .breadcrumb button {
+} 
+
+.open-form-button {
     margin-left: 10px;
     border: 1px solid #FCA311;
     font-size: 12px;
@@ -70,7 +77,7 @@ body {
     color: #FCA311;
     border-color: #FCA311;
     cursor: pointer;
-} .breadcrumb button:hover {
+} .open-form-button:hover {
     transition: all 0.3s ease;
     transform: scale(1.1);
     box-shadow: 0 0 5px rgb(252, 163, 17);
@@ -100,6 +107,19 @@ body {
     height: 1px;
     background-color: #ddd;    
     margin-left: 10px;         
+}
+
+.breadcrumb-button {
+    border: 0px solid #ffffff00;
+    background-color: #ffffff00;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Montserrat';
+    color: #FCA311;
+    padding: 0;
+} .breadcrumb-button:hover {
+    text-decoration: underline;
+    transition: all 1s ease;
 }
 
 
@@ -220,6 +240,7 @@ body {
     border-width: 1px;
     border-style: solid;
     border-color: #aaa;
+    font-size: inherit;
     padding: 5px;
     height: 15px;
 } .search-area input {
@@ -289,6 +310,8 @@ body {
     border: 0 none #ffffff00;
     font-family: 'Montserrat';
     background-color: #ffffff00;
+} .sort-button:hover{
+    text-decoration:underline;
 }
 
 
@@ -348,10 +371,8 @@ body {
     border: 0px solid #ddd;
     padding: 85px 50px 0 50px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    height: 100%;
-    position: sticky;
-    top: 80px; /* adjust to navbar height */
     border-left-width: 1px;
+    max-height: fit-content;
 }
 
 .form {
@@ -397,7 +418,7 @@ body {
 /* Make sure the form itself expands fully */
 .form-wrapper .area-main-form {
     width: 75%;
-    height: 640px;
+    height: 100vh;
 }
 
 
@@ -464,7 +485,7 @@ select {
 .add-button-container {
     display: flex;
     justify-content: center;
-    margin-top: 100px;
+    margin-top: 70px;
     margin-bottom: 35px;
     width: 95%;
 } .add-button-container:hover {
@@ -477,7 +498,7 @@ select {
 .add-college {
     font-size: large;
     font-weight: bold;
-    padding: 5px 10px;
+    padding: 5px 0px;
     font-family: 'Montserrat';
     border: 1px solid #FCA311;
     background-color: #FCA311;
@@ -500,3 +521,28 @@ select {
 
 
 
+.pagination-controls {
+    margin: 10px 10px 10px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+} .pagination-controls span {
+    color: #FCA311;
+    font-weight: 600;
+    font-size: 12px;
+} .pagination-controls button {
+    font-family: 'Montserrat';
+    color: #FCA311;
+    font-weight:700; 
+    font-size: 12px;
+    border: 0px solid #ffffff;
+    background-color: #ffb53e00;
+    padding: 0;
+} .pagination-controls button:hover {
+    border-bottom: 1px solid #FCA311;
+    transition: border-bottom 0.3s ease;
+}
+
+.page-icon {
+    padding: 0 5px 0 5px;
+}
