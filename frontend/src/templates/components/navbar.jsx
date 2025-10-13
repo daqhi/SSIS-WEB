@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGear, faUser, faDoorOpen } from "@fortawesome/free-solid-svg-icons";
 import "../../static/css/navbar.css";
 
 function Navbar() {
@@ -31,6 +33,9 @@ function Navbar() {
         navigate(path, options);
         setOpenMenu(null);
     };
+
+    // to handle logout
+
 
     return (
         <div className="navbar">
@@ -71,16 +76,42 @@ function Navbar() {
                 <button className="nav-btn" onClick={() => navigate("/analytics")}>Analytics</button>
             </div>
 
-            <div className="nav-right">
-                <div className="user-info">
-                    <label>@eliabado</label>
-                    <p>eliabado24@example.com</p>
+
+            <div class="menu">
+                <div class="item">
+                    <div className="nav-right">
+                        <div className="user-info">
+                            <label>@eliabado</label>
+                            <p>eliabado24@example.com</p>
+                        </div>
+                        <img
+                            src="/src/static/icons/default.jpg"
+                            alt="Profile"
+                            className="profile-pic"
+                        />
+                    </div>
+            
+                    <div class="submenu">
+                        <div class="submenu-item">
+                            <a href="#" class="submenu-link">
+                                <FontAwesomeIcon icon={faUser} style={{color:"#767676ff", paddingRight: "10px"}}/>
+                                Profile 
+                            </a>
+                        </div>
+                        <div class="submenu-item">
+                            <a href="#" class="submenu-link"> 
+                                <FontAwesomeIcon icon={faGear} style={{color:"#767676ff", paddingRight: "10px"}}/>
+                                Settings 
+                            </a>
+                        </div>
+                        <div class="submenu-item">
+                            <a href="#" class="submenu-link" onClick={(e) => {e.preventDefault(); handleNavigate("/sign-in") }}> 
+                                <FontAwesomeIcon icon={faDoorOpen} style={{color:"#767676ff", paddingRight: "10px"}}/>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <img
-                    src="/src/static/icons/default.jpg"
-                    alt="Profile"
-                    className="profile-pic"
-                />
             </div>
         </div>
     );

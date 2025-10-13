@@ -96,6 +96,11 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
             return;
         }
 
+        if (editingCollege) {
+            const confirmed = window.confirm("Are you sure you want to update college details?")
+            if (!confirmed) return; //cancel update
+        }
+
         const payload = {
             collegecode: collegeCode,
             collegename: collegeName,
@@ -240,47 +245,46 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
         }
     }
 
+
+    // for searching
+    async function handleSearch(keyword) {
+        if (!keyword.trim()) {
+            // if input is empty, reload all colleges
+            fetchColleges();
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/api/search_college/${keyword}`);
+            if (!res.ok) throw new Error("Search failed");
+
+            const data = await res.json();
+            setColleges(data);
+        } catch (err) {
+            console.error("Error searching colleges:", err);
+        }
+    }
+
+
+
     return (
         <div className="area-main-directory">
             <h1 className="directory-header">College Directory FIX: ahmm ang sort</h1>
 
             <div className='functions'>
                 <div className='function-search-item'>
-                    <label>Keywords</label>
+                    <label>Search Area</label>
                     <div className='search-area'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input type='text' placeholder='Type in a keyword or name...' />
+                        <input type='text' placeholder='Type in a keyword or name...' onChange={(e) => handleSearch(e.target.value)} />
                     </div>
                 </div>
 
-                <div className='function-item'>
-                    <label>Filter</label>
-                    <div className="custom-select">
-                        <select>
-                            <option value="">All</option>
-                            <option value="">College</option>
-                            <option>Program Code</option>
-                            <option>Program Name</option>
-                        </select>
-                        <img src='/src/static/icons/arrow-down.png' className='dropdown-icon'/>
-                    </div>
-                </div>
-
-                <div className="function-item">
-                    <label>Sort by</label>
-                    <div className="custom-select">
-                        <select>
-                        <option value="">All</option>
-                        <option value="oten">oten</option>
-                        </select>
-                        <img src='/src/static/icons/arrow-down.png' className='dropdown-icon'/>
-                    </div>
-                </div>
-
+                {/* 
                 <div className='function-item'>
                     <label>    </label>
                     <button>Search</button>
-                </div>
+                </div> */}
             </div>
 
             <div className="table">
@@ -304,7 +308,8 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                     </thead>
 
                     <tbody>
-                        {currentColleges.map((c) => (
+                        {colleges.length > 0 ? (
+                            colleges.map((c) => (
                             <tr key={c.collegecode}>
                                 <td>{c.collegecode}</td>
                                 <td>{c.collegename}</td>
@@ -320,14 +325,19 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                                     </button>
                                 </td>
                             </tr>
-                        ))}
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="3" style={{ textAlign: "center", padding: "10px" }}>No colleges found.</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
 
                 <div className="pagination-controls">
                     <button 
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1,1))} 
-                        disabled={currentPage === 1}>
+                        style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}>
                         <FontAwesomeIcon className='page-icon' icon={faArrowLeft} size="sm" color="#FCA311" /> 
                         Prev
                     </button>
@@ -336,10 +346,9 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
 
                     <button 
                         onClick = {() => setCurrentPage(prev => prev < Math.ceil(colleges.length/rowsPerPage) ? prev +1 : prev )} 
-                        disabled={currentPage === Math.ceil(colleges.length/rowsPerPage)}>
+                        style={{ visibility: currentPage === Math.ceil(colleges.length/rowsPerPage) ? 'hidden' : 'visible' }}>
                         Next 
                         <FontAwesomeIcon className='page-icon' icon={faArrowRight} size="sm" color="#FCA311" /> 
-                        
                     </button>
                 </div>
             </div>

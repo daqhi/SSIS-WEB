@@ -108,6 +108,11 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
             return;
         }
 
+        if (editingProgram) {
+            const confirmed = window.confirm("Are you sure you want to update program details?")
+            if (!confirmed) return; //cancel update
+        }
+
         const payload = {
             collegecode: collegeCode,
             programcode: programCode,
@@ -141,7 +146,7 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
                 onProgramAdded?.();
             }
 
-            // Reset form
+            // clear form
             setCollegeCode("");
             setProgramName("");
             setProgramCode("");
@@ -281,46 +286,36 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
     }
 
 
+    // for searching
+    async function handleSearch(keyword) {
+        if (!keyword.trim()) {
+            fetchPrograms();
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/api/search_program/${keyword}`);
+            if (!res.ok) throw new Error("Search failed");
+
+            const data = await res.json();
+            setPrograms(data);
+        } catch (err) {
+            console.error("Error searching programs:", err);
+        }
+    }
+
+
     return (
         <div className='area-main-directory'>
             <h1 className='directory-header'>Program Directory</h1>
 
             <div className='functions'>
                 <div className='function-search-item'>
-                    <label>Keywords</label>
+                    <label>Search Area</label>
                     <div className='search-area'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input type='text' placeholder='Type in a keyword or name...' />
+                        <input type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)}/>
                     </div>
-                </div>
-
-                <div className='function-item'>
-                    <label>Filter</label>
-                    <div className="custom-select">
-                        <select>
-                            <option value="">All</option>
-                            <option value="">College</option>
-                            <option>Program Code</option>
-                            <option>Program Name</option>
-                        </select>
-                        <img src='/src/static/icons/arrow-down.png' className='dropdown-icon'/>
-                    </div>
-                </div>
-
-                <div className="function-item">
-                    <label>Sort by</label>
-                    <div className="custom-select">
-                        <select>
-                        <option value="">All</option>
-                        <option value="oten">oten</option>
-                        </select>
-                        <img src='/src/static/icons/arrow-down.png' className='dropdown-icon'/>
-                    </div>
-                </div>
-
-                <div className='function-item'>
-                    <label>    </label>
-                    <button>Search</button>
                 </div>
             </div>
 
@@ -353,9 +348,10 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                         </tr>
                         </thead>
                         <tbody>
-                            {currentPrograms.map((p) => (
+                            {programs.length > 0 ? (
+                                programs.map((p) => (
                                 <tr key={p.programCode}>
-                                    <td>{p.collegecode}</td>
+                                    <td>{p.collegecode || "None"}</td>
                                     <td>{p.programcode}</td>
                                     <td>{p.programname}</td>
                                     <td>
@@ -368,13 +364,19 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                                         </button>
                                     </td>
                                 </tr>
-                            ))}
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="4" style={{ textAlign: "center", padding: "10px" }}>No programs found.</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
+
                     <div className="pagination-controls">
                         <button 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1,1))} 
-                            disabled={currentPage === 1}>
+                            style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}>
                             <FontAwesomeIcon className='page-icon' icon={faArrowLeft} size="sm" color="#FCA311" /> 
                             Prev
                         </button>
@@ -383,7 +385,7 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
 
                         <button 
                             onClick = {() => setCurrentPage(prev => prev < Math.ceil(programs.length/rowsPerPage) ? prev +1 : prev )} 
-                            disabled={currentPage === Math.ceil(programs.length/rowsPerPage)}>
+                            style={{ visibility: currentPage === Math.ceil(programs.length/rowsPerPage) ? 'hidden' : 'visible' }}>
                             Next 
                             <FontAwesomeIcon className='page-icon' icon={faArrowRight} size="sm" color="#FCA311" /> 
                         </button>

@@ -116,24 +116,32 @@ def update_college(programcode):
 
 
 #============================ FOR DELETE ============================#
-
 @programs_bp.route('/delete_program/<string:programcode>', methods=['DELETE'])
 def delete_program(programcode):
     try:
         conn = get_db_connection()
         cur = conn.cursor()
 
+        cur.execute("""
+            UPDATE students
+            SET programcode = NULL
+            WHERE programcode = %s;
+        """, (programcode,))
+
         cur.execute("DELETE FROM programs WHERE programcode = %s;", (programcode,))
+        
         conn.commit()
 
         cur.close()
         conn.close()
 
-        return jsonify({"message": f"Program '{programcode}' deleted successfully."}), 200
+        return jsonify({
+            "message": f"Program '{programcode}' deleted successfully."
+        }), 200
+
     except Exception as e:
         print(f"Error deleting program: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 
 

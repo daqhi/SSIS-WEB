@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import SignIn from "./templates/entry/sign-up.jsx";
+import SignIn from "./templates/entry/sign-in.jsx";
 import SignUp from "./templates/entry/sign-up.jsx";
 import Dashboard from './templates/dashboard/dashboards.jsx'
 import Analytics from './templates/analytics/analytics-page.jsx'
@@ -11,7 +11,7 @@ import ProgramPage from './templates/program/program-page.jsx'
 import StudentPage from './templates/student/student-page.jsx'
 
 const router = createBrowserRouter([
-    { path: "/", element: <ProgramPage /> },
+    { path: "/", element: <SignIn /> },
     { path: "/sign-in", element: <SignIn /> },
     { path: "/sign-up", element: <SignUp /> },
     { path: '/dashboard', element: <Dashboard /> },

@@ -52,6 +52,7 @@ def register_user():
         return jsonify({"error": str(e)}), 500
 
 
+
 # GET USERS
 @users_bp.route("/users", methods=["GET"])
 def get_users():
@@ -78,12 +79,43 @@ def get_users():
 
 
 
+# LOGIN USER
+@users_bp.route("/login", methods=["POST"])
+def login_user():
+    try:
+        data = request.get_json()
+        username = data.get("username")
+        userpass = data.get("password")
 
+        if not username or not userpass:
+            return jsonify({"error": "Missing username or password"}), 400
 
-#sign in wi google
-#cloudinary for photos
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
+        cur.execute("SELECT * FROM users WHERE username = %s;", (username,))
+        user = cur.fetchone()
 
-#logic for sign in 
+        cur.close()
+        conn.close()
 
-# chekc for usrname and pass, if it
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        if user["userpass"] != userpass:  # (plain text)
+            return jsonify({"error": "Invalid password"}), 401
+
+        print(f"User '{username}' logged in successfully!")
+        return jsonify({
+            "message": "Login successful",
+            "user": {
+                "userid": user["userid"],
+                "username": user["username"],
+                "email": user["useremail"]
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"Error in login_user: {e}")
+        return jsonify({"error": str(e)}), 500
+

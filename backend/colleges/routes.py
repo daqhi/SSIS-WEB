@@ -121,13 +121,23 @@ def delete_college(collegecode):
         conn = get_db_connection()
         cur = conn.cursor()
 
+        cur.execute("""
+            UPDATE programs
+            SET collegecode = NULL
+            WHERE collegecode = %s;
+        """, (collegecode,))
+
         cur.execute("DELETE FROM colleges WHERE collegecode = %s;", (collegecode,))
+        
         conn.commit()
 
         cur.close()
         conn.close()
 
-        return jsonify({"message": f"College '{collegecode}' deleted successfully."}), 200
+        return jsonify({
+            "message": f"College '{collegecode}' deleted successfully. Related programs now have no college."
+        }), 200
+
     except Exception as e:
         print(f"Error deleting college: {e}")
         return jsonify({"error": str(e)}), 500

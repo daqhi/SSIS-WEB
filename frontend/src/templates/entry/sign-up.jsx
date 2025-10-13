@@ -12,14 +12,12 @@ export default function SignUp() {
     const [userName, setUserName] = useState("");
     const [userEmail, setUserEmail] = useState("");
     const [userPass, setUserPass] = useState("");
-    const [message, setMessage] = useState("");
+    
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const [show, setShow] = useState(false);
 
-    useEffect(() => {
-        setShow(true);
-    }, []);
+    useEffect(() => { setShow(true) }, []);
 
 
     // Add user handler
@@ -92,10 +90,7 @@ export default function SignUp() {
                                 placeholder="email@example.com"
                                 required
                             />
-                            <div className='forgot-password-area'>
-                                <label className='form-label'>Password</label>
-                                <button className='forgot-password-btn'>Forgot?</button>
-                            </div>
+                            <label className='form-label'>Password</label>
                             <input
                                 type="password"
                                 value={userPass}
@@ -126,8 +121,8 @@ export default function SignUp() {
                         </button>
                     </div>
                     <div className="form-section">
-                        <p>Don't have an account? </p>
-                        <button onClick={() => navigate("/signup")}>Sign up</button>
+                        <p>Already have an account? </p>
+                        <button onClick={() => navigate("/sign-in")}>Sign in</button>
                     </div>
                 </div>
                 {/* <div className="side-image-container">

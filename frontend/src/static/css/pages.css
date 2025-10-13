@@ -13,12 +13,12 @@
 }
 
 
-
 body {
     margin: 0;
     padding: 0;
     font-family:'Montserrat', 'Charter';
     max-width:100%;
+    max-height: 90vh;
     background: #ffffff;
     display: block;
 }
@@ -181,7 +181,6 @@ body {
 }.function-search-item {
     width: 250px;
 }
-
 .function-item .custom-select {
     position: relative;
     display: inline-block;
@@ -248,11 +247,12 @@ body {
     margin: 0px;
     padding: 0px 0px 0px 6px;
     max-width: 100%;
+    font-family: "Montserrat";
+    font-size: 13px;
 } .search-area input:focus {
     outline: none;
     border: none;
-    box-shadow: none;
-}
+} 
 
 
 
@@ -382,11 +382,15 @@ body {
     margin-top: 10px;
     width: 100%;
 } .form input {
-    border: solid 1px #828282;
+    border: solid 1px #a4a4a4;
     border-radius: 0px;
-    height: 25px;
+    height: 10px;
     margin: 0;
     width: 100%;
+    background-color: #ffffff;
+    width:300px;
+    font-family: "Montserrat";
+    font-size: 13px;
 } .form input:focus {
     outline: none;
 } .form input:hover {
@@ -396,8 +400,12 @@ body {
     color: #373737;
     font-size: 15px;
     width: 300px;
-    margin: 15px 0 10px 0;
-} 
+    margin: 15px 0 8px 0;
+} .form select {
+    color: #787878;
+    padding: 5px 5px 5px 10px;
+    height: 27px;
+}
 
 
 .form-wrapper {
@@ -437,7 +445,7 @@ label {
     width: 100px;
 }
 
-input {
+/* input {
     font-size: small;
     padding: 5px;
     font-family: 'Montserrat';
@@ -447,7 +455,7 @@ input {
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 10px;
-}
+} */
 
 select {
     font-size: small;
@@ -486,7 +494,7 @@ select {
     display: flex;
     justify-content: center;
     margin-top: 70px;
-    margin-bottom: 35px;
+    margin-bottom: 40px;
     width: 95%;
 } .add-button-container:hover {
     box-shadow: 0 0 15px rgba(255, 187, 79, 0.5);

@@ -16,46 +16,35 @@ def get_db_connection():
 
 
 #============================ FOR ADDING ============================#
-# for adding students
 @students_bp.route("/add_student", methods=["POST"])
 def add_student():
+    data = request.get_json()
+
+    idnum = data.get("idnum")
+    firstname = data.get("firstname")
+    lastname = data.get("lastname")
+    sex = data.get("sex")
+    yearlevel = data.get("yearlevel")
+    programcode = data.get("programcode")
+
+    if not all([idnum, firstname, lastname, sex, yearlevel, programcode]):
+        return jsonify({"error": "Missing required fields"}), 400
+
     try:
-        data = request.get_json()
-        idnum = data.get('idnum')
-        firstname = data.get('firstname')
-        lastname = data.get('lastname')
-        sex = data.get('sex')
-        yearlevel = data.get('yearlevel')
-        programcode = data.get('programcode')
-
-        if not idnum or not firstname or not lastname or not sex or not yearlevel or not programcode:
-            return jsonify({'error': 'Missing required fields'}), 400
-        
-        conn = get_db_connection
+        conn = get_db_connection()
         cur = conn.cursor()
-
-        cur.execute(
-            """"
+        cur.execute("""
             INSERT INTO students (idnum, firstname, lastname, sex, yearlevel, programcode)
             VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING idnum;
-            """,
-            (idnum, firstname, lastname, sex, yearlevel, programcode)
-        ) 
-
-        student_id = cur.fetchone()[0]
+        """, (idnum, firstname, lastname, sex, yearlevel, programcode))
         conn.commit()
-
         cur.close()
         conn.close()
 
-        print(f"Student {idnum} registered successfully!")
-        return jsonify({'message': 'Student registered successfully!'}), 201
-    
+        return jsonify({"message": "Student added successfully"}), 201
     except Exception as e:
-        print (f"Error in add_student: {e}")
-        return jsonify({'error': str(e)}), 500
-    
+        print("Error adding student:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 
@@ -78,34 +67,6 @@ def get_students():
     except Exception as e:
         print(f"Error in get_students: {e}")
         return jsonify({"error": str(e)}), 500
-    
-
-
-#============================ FOR LISTING ALL PROGRAMS ============================#
-# list programs
-@students_bp.route("/program_list", methods=['GET'])
-def get_programs():
-    try:
-        print("GET /api/program_list endpoint hit!")
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        
-        cur.execute("SELECT * FROM programs;")
-        programs = cur.fetchall()
-        
-        print(f"Found {len(programs)} prorgams")
-        print(f"Users data: {programs}")
-        
-        cur.close()
-        conn.close()
-        
-        return jsonify(programs), 200
-        
-    except Exception as e:
-        print(f"Error in get_programs: {e}")
-        return jsonify({"error": str(e)}), 500
-     
-
 
 
 
@@ -180,16 +141,30 @@ def search_student(keyword):
     try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        
-        query = """ SELECT * FROM students WHERE idnum ILIKE %s OR firstname ILIKE %s OR lastname ILIKE %s OR sex ILIKE %s OR yearlevel ILIKE %s OR programcode ILIKE %s; """
+
+        # Use COALESCE so that NULL fields don't break the ILIKE comparison
+        query = """
+            SELECT * FROM students
+            WHERE COALESCE(idnum, '') ILIKE %s
+               OR COALESCE(firstname, '') ILIKE %s
+               OR COALESCE(lastname, '') ILIKE %s
+               OR COALESCE(sex, '') ILIKE %s
+               OR COALESCE(yearlevel::TEXT, '') ILIKE %s
+               OR COALESCE(programcode, '') ILIKE %s;
+        """
+
         search_pattern = f"%{keyword}%"
+        params = (search_pattern,) * 6
 
-        cur.execute(query, (search_pattern, search_pattern, search_pattern, search_pattern, search_pattern, search_pattern))
-
+        cur.execute(query, params)
         results = cur.fetchall()
+
         cur.close()
         conn.close()
 
         return jsonify(results), 200
+
     except Exception as e:
+        print("Error in search_student:", e)
         return jsonify({"error": str(e)}), 500
+

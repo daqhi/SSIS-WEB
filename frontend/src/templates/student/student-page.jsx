@@ -106,17 +106,29 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
     useEffect(() => {
         fetch(`${API}/api/program_list`)
             .then((res) => res.json())
-            .then((data) => setPrograms(data))
+            .then((data) => {
+                console.log("Fetched programs:", data);
+                setPrograms(data);
+            })
             .catch((err) => console.error("Error fetching programs:", err));
     }, []);
+
 
     //handler to add student
     async function handleSubmit(e) {
         e.preventDefault();
 
-        if (!idNum || !firstName || !lastName || !sex || !yearLevel || !program ) {
+        if (
+            !idNum || !firstName || !lastName ||
+            !sex || !yearLevel || !program
+        ) {
             alert("All fields are required!");
             return;
+        }
+
+        if (editingStudent) {
+            const confirmed = window.confirm("Are you sure you want to update this student’s information?");
+            if (!confirmed) return; // stop if user cancels
         }
 
         const payload = {
@@ -125,37 +137,35 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             lastname: lastName,
             sex: sex,
             yearlevel: yearLevel,
-            programcode: program,
+            programcode: program === "None" ? null : program,
         };
 
         try {
             let res;
-
             if (editingStudent) {
-                // Update existing students
                 res = await fetch(`${API}/api/students/${editingStudent.idnum}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
                 });
-
-                if (!res.ok) throw new Error("Failed to update student");
-                alert("Student updated successfully!");
-                onStudentUpdated?.();
             } else {
-                // Add new college
                 res = await fetch(`${API}/api/add_student`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
                 });
-
-                if (!res.ok) throw new Error("Failed to add student");
-                alert("Student added successfully!");
-                onStudentAdded?.();
             }
 
-            // Reset form
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error("Backend error:", errorText);
+                throw new Error(errorText || "Request failed");
+            }
+
+            alert(editingStudent ? "Student updated successfully!" : "Student added successfully!");
+            editingStudent ? onStudentUpdated?.() : onStudentAdded?.();
+
+            // clear form
             setIdNum("");
             setFirstName("");
             setLastName("");
@@ -166,8 +176,9 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             console.error("Error submitting form:", err);
             alert("Something went wrong. Check console for details.");
         }
-
     }
+
+
 
 
     return (
@@ -183,6 +194,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                         onChange={(e) => setIdNum(e.target.value)}
                         placeholder='YYYY-NNNN'
                         required
+                        disabled={!!editingStudent}
                     /> <br />
                     
                     <label>First Name: </label> <br />
@@ -209,7 +221,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                         onChange={(e) => setSex(e.target.value)}
                         required
                     >
-                        <option value="null">Select sex</option>
+                        <option value="">Select sex</option>
                         <option value="Female">Female</option>
                         <option value="Male">Male</option>
                     </select>
@@ -220,7 +232,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                         onChange={(e) => setYearLevel(e.target.value)}
                         required
                     >
-                        <option value="null">Select year level</option>
+                        <option value="">Select year level</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value='3'>3</option>
@@ -229,11 +241,11 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
 
                     <label>Program: </label>
                     <select 
-                        value={program}
+                        value={program || "None"}
                         onChange={(e) => setProgram(e.target.value)}
                         required
                     >
-                        <option value="null">Select Program</option>
+                        <option value="">Select Program</option>
                         {programs.map((p) => (
                             <option key={p.programcode} value={p.programcode}>
                                 {p.programcode}
@@ -362,6 +374,24 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
         }
     }
 
+    // for searching
+    async function handleSearch(keyword) {
+        if (!keyword.trim()) {
+            fetchStudents();
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/api/search_student/${keyword}`);
+            if (!res.ok) throw new Error("Search failed");
+
+            const data = await res.json();
+            setStudents(data);
+        } catch (err) {
+            console.error("Error searching students:", err);
+        }
+    }
+
 
     return (
         <div className='area-main-directory'>
@@ -369,40 +399,11 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
 
             <div className='functions'>
                 <div className='function-search-item'>
-                    <label>Keywords</label>
+                    <label>Search Area</label>
                     <div className='search-area'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input type='text' placeholder='Type in a keyword or name...' />
+                        <input type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
                     </div>
-                </div>
-
-                <div className='function-item'>
-                    <label>Filter</label>
-                    <div className="custom-select">
-                        <select>
-                            <option value="">All</option>
-                            <option value="">College</option>
-                            <option>Student Code</option>
-                            <option>Student Name</option>
-                        </select>
-                        <img src='/src/static/icons/arrow-down.png' className='dropdown-icon'/>
-                    </div>
-                </div>
-
-                <div className="function-item">
-                    <label>Sort by</label>
-                    <div className="custom-select">
-                        <select>
-                        <option value="">All</option>
-                        <option value="oten">oten</option>
-                        </select>
-                        <img src='/src/static/icons/arrow-down.png' className='dropdown-icon'/>
-                    </div>
-                </div>
-
-                <div className='function-item'>
-                    <label>    </label>
-                    <button>Search</button>
                 </div>
             </div>
 
@@ -457,13 +458,13 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
                                     <td>{s.lastname}</td>
                                     <td>{s.sex}</td>
                                     <td>{s.yearlevel}</td>
-                                    <td>{s.programcode}</td>
+                                    <td>{s.programcode || "None"}</td>
                                     <td>
-                                        <button className='edit' onClick={() => onEditStudent(p)} > 
+                                        <button className='edit' onClick={() => onEditStudent(s)} > 
                                             <FontAwesomeIcon icon={faPenToSquare} size='xs' color='#000000ff'/>
                                         </button>
                                         
-                                        <button className='delete' onClick={() => handleDelete(p.studentcode)}> 
+                                        <button className='delete' onClick={() => handleDelete(s.idnum)}> 
                                             <FontAwesomeIcon icon={faTrash} size='xs' color='#FCA311'/> 
                                         </button>
                                     </td>
@@ -474,7 +475,7 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
                     <div className="pagination-controls">
                         <button 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1,1))} 
-                            disabled={currentPage === 1}>
+                            style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}>
                             <FontAwesomeIcon className='page-icon' icon={faArrowLeft} size="sm" color="#FCA311" /> 
                             Prev
                         </button>
@@ -482,8 +483,8 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
                         <span>Page {currentPage} of {Math.ceil(students.length / rowsPerPage)} </span>
 
                         <button 
-                            onClick = {() => setCurrentPage(prev => prev < Math.ceil(students.length/rowsPerPage) ? prev +1 : prev )} 
-                            disabled={currentPage === Math.ceil(students.length/rowsPerPage)}>
+                            onClick = {() => setCurrentPage(prev => prev < Math.ceil(students.length/rowsPerPage) ? prev +1 : prev )}
+                            style={{ visibility: currentPage === Math.ceil(students.length/rowsPerPage) ? 'hidden' : 'visible' }} >
                             Next 
                             <FontAwesomeIcon className='page-icon' icon={faArrowRight} size="sm" color="#FCA311" /> 
                         </button>
