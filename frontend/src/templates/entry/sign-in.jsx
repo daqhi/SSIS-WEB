@@ -7,6 +7,7 @@ import SignUpImg from "../../static/icons/react.svg";
 
 import "../../static/css/entry.css";
 import Dashboard from "../dashboard/dashboards";
+import ProtectedRoute from "../components/protected-route";
 
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
@@ -16,6 +17,9 @@ function SignIn() {
     const [show, setShow] = useState(false);
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
+
+    const [fadeOut, setFadeOut] = useState(false);
+
 
 
     useEffect(() => { setShow(true) }, []);
@@ -36,7 +40,10 @@ function SignIn() {
             const data = await res.json()
 
             if(res.ok) {
-                alert("Sign in sucessful");
+
+                localStorage.setItem("isLoggedIn", "true");
+                localStorage.setItem("username", data.username);
+
                 navigate("/dashboard");
             } else {
                 alert(data.error || "Login failed.");
@@ -46,7 +53,6 @@ function SignIn() {
             alert("server error. check console")
         }
     }
-
 
 
 

@@ -292,6 +292,18 @@ input {
 
 
 
+/* for animation */
+.signin-container {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.signin-container.fade-out {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
 
 
 

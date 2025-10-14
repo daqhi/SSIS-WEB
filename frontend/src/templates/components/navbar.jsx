@@ -41,7 +41,7 @@ function Navbar() {
         <div className="navbar">
             <div className="nav-left">
                 <img src="/src/static/icons/react.svg" alt="Logo" className="nav-logo" />
-                <button className="nav-btn" onClick={() => navigate("/")}>Home</button>
+                <button className="nav-btn" onClick={() => navigate("/dashboard")}>Home</button>
 
                 {/* Forms Dropdown */}
                 <div
@@ -105,7 +105,15 @@ function Navbar() {
                             </a>
                         </div>
                         <div class="submenu-item">
-                            <a href="#" class="submenu-link" onClick={(e) => {e.preventDefault(); handleNavigate("/sign-in") }}> 
+                            <a
+                                className="submenu-link"
+                                onClick={() => {
+                                    localStorage.removeItem("isLoggedIn");
+                                    localStorage.removeItem("username");
+                                    localStorage.removeItem("email");
+                                    window.location.href = "/sign-in"; // full reload to clear all state
+                                }}
+                            >
                                 <FontAwesomeIcon icon={faDoorOpen} style={{color:"#767676ff", paddingRight: "10px"}}/>
                                 Logout
                             </a>
