@@ -12,9 +12,11 @@ DB_CONFIG = {
     "password": os.getenv("DATABASE_PASSWORD")
 }
 
-# Debug: Print config (remove password in production!)
-print("🔧 DB Config loaded:")
-print(f"  Host: {DB_CONFIG['host']}")
-print(f"  Port: {DB_CONFIG['port']} (type: {type(DB_CONFIG['port'])})")
-print(f"  Database: {DB_CONFIG['database']}")
-print(f"  User: {DB_CONFIG['user']}")
+
+class Config:
+    MAIL_SERVER = os.getenv("MAIL_SERVER")  # e.g., sandbox.smtp.mailtrap.io
+    MAIL_PORT = int(os.getenv("MAIL_PORT", 2525)) # Default to Mailtrap's common port
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", 'True') == 'True' # True by default
+    MAIL_USE_SSL = os.getenv("MAIL_USE_SSL", 'False') == 'True' # False by default

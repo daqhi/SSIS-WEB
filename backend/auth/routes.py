@@ -1,22 +1,24 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
+from flask_mail import Message
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from config import DB_CONFIG
 
-users_bp = Blueprint("users_bp", __name__, url_prefix="/api")
+auth_bp = Blueprint("auth_bp", __name__, url_prefix="/api")
 
 def get_db_connection():
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         print("Database connection successful!")
-        return conn
+        return conn 
     except Exception as e:
         print(f"Database connection failed: {e}")
         raise
 
 
+
 # REGISTER USER
-@users_bp.route("/register", methods=["POST"])
+@auth_bp.route("/register", methods=["POST"])
 def register_user():
     try:
         data = request.get_json()
@@ -41,6 +43,17 @@ def register_user():
         user_id = cur.fetchone()[0]
         conn.commit()
 
+        mail = current_app.extensions.get('mail')
+
+        message = Message(  
+            subject='Account Registration Successful',
+            sender='noreply@webssis.com',
+            recipients=[useremail],
+            body=f'You have registered your account successfully. Welcome to Web SSIS, {username}!'
+        )
+
+        mail.send(message)
+
         cur.close()
         conn.close()
 
@@ -54,7 +67,7 @@ def register_user():
 
 
 # GET USERS
-@users_bp.route("/users", methods=["GET"])
+@auth_bp.route("/users", methods=["GET"])
 def get_users():
     try:
         print("GET /api/users endpoint hit!")
@@ -80,7 +93,7 @@ def get_users():
 
 
 # LOGIN USER
-@users_bp.route("/login", methods=["POST"])
+@auth_bp.route("/login", methods=["POST"])
 def login_user():
     try:
         data = request.get_json()
@@ -118,4 +131,6 @@ def login_user():
     except Exception as e:
         print(f"Error in login_user: {e}")
         return jsonify({"error": str(e)}), 500
+
+
 

@@ -1,9 +1,12 @@
 from flask import Blueprint, jsonify, request
+from flask_cors import CORS
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from config import DB_CONFIG
 
 students_bp = Blueprint("students_bp", __name__, url_prefix="/api")
+CORS(students_bp)
+
 
 def get_db_connection():
     try:
@@ -168,3 +171,20 @@ def search_student(keyword):
         print("Error in search_student:", e)
         return jsonify({"error": str(e)}), 500
 
+
+
+@students_bp.route('/student_count', methods=['GET'])
+def get_student_count():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT COUNT(*) FROM students;" )
+        count = cur.fetchone()[0]
+
+        cur.close()
+        conn.close()
+
+        return jsonify({"count": count}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

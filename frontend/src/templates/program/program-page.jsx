@@ -161,16 +161,17 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
 
 
     return (
-        <div className='area-main-form'>
-            <h1 className='form-header'>Program Form</h1>
+        <div className='bg-gray-100 form-container p-10 pb-55'>
+            <h1 className='font-bold text-4xl mb-5 pt-10'>Program Form</h1>
             <hr />
-            <div className='form'>
+            <div className='mt-5'>
                 <form onSubmit={handleSubmit}>
-                    <label>College: </label>
+                    <label className="font-semibold text-base">College: </label>
                     <select 
                         value={collegeCode}
                         onChange={(e) => setCollegeCode(e.target.value)}
                         required
+                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     >
                         <option value="null">Select College Code</option>
                         {colleges.map((c) => (
@@ -180,22 +181,24 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
                         ))}
                     </select>
 
-                    <label>Program Code: </label> <br />
+                    <label className="font-semibold text-base">Program Code: </label> <br />
                     <input
                         type="text"
                         value={programCode}
                         onChange={(e) => setProgramCode(e.target.value)}
                         placeholder='e.g. BSCS'
                         required
+                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     /> <br />
                     
-                    <label>Program Name: </label> <br />
+                    <label className="font-semibold text-base">Program Name: </label> <br />
                     <input
                         type="text"
                         value={programName}
                         onChange={(e) => setProgramName(e.target.value)}
                         placeholder='e.g. Bachelors of Science in Computer Science'
                         required
+                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     /> <br />
                     <div className='add-button-container'>
                         <button type="submit" className='add-program'>
@@ -234,13 +237,15 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
 
     function toggleSortCollegeCode() {
         const sorted = [...programs].sort((a, b) => {
-            return sortOrder === "asc"
-                ? a.collegecode.localeCompare(b.collegecode)
-                : b.collegecode.localeCompare(a.collegecode);
+            const aCode = a.collegecode ? a.collegecode.toString() : '';
+            const bCode = b.collegecode ? b.collegecode.toString() : '';
+            return sortOrder === "asc" 
+                ? aCode.localeCompare(bCode) 
+                : bCode.localeCompare(aCode);
         });
 
         setPrograms(sorted);
-        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+        setSortOrder(prev => prev === "asc" ? "desc" : "asc");
     }
 
     function toggleSortProgramCode() {
@@ -307,49 +312,47 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
 
     return (
         <div className='area-main-directory'>
-            <h1 className='directory-header'>Program Directory</h1>
-
-            <div className='functions'>
-                <div className='function-search-item'>
-                    <label>Search Area</label>
-                    <div className='search-area'>
+            <div className='flex flex-row justify-between items-center mt-8 mb-10'>
+                <h1 className="font-bold text-4xl">Program Directory</h1>
+                <div className='text-sm w-72'>
+                    <div className='border-1 border-gray-300 p-2 flex items-center gap-2 bg-white'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)}/>
+                        <input className='w-full focus:outline-none w-full' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
                     </div>
                 </div>
             </div>
 
 
-            <div>
-                <div className="table">
-                    <table>
+            <div className='w-full'>
+                <div className="w-full table">
+                    <table className='text-sm'>
                         <thead>
-                        <tr>
+                        <tr className='border-b-2 border-gray-300'>
                             <th>
-                                <button className='sort-button' onClick={toggleSortCollegeCode}> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortCollegeCode}> 
                                     College Code <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
                             <th>
-                                <button className='sort-button' onClick={toggleSortProgramCode}> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortProgramCode}> 
                                     Program Code <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
                             <th>
-                                <button className='sort-button' onClick={toggleSortProgramName}> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortProgramName}> 
                                     Program Name <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
                             <th>
-                                <button className='sort-button'> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1'> 
                                     Actions <FontAwesomeIcon icon={faSort} size='xs' color='#f5f5f500'/> 
                                 </button>
                             </th>
                         </tr>
                         </thead>
                         <tbody>
-                            {programs.length > 0 ? (
-                                programs.map((p) => (
+                            {currentPrograms.length > 0 ? (
+                                currentPrograms.map((p) => (
                                 <tr key={p.programCode}>
                                     <td>{p.collegecode || "None"}</td>
                                     <td>{p.programcode}</td>
@@ -373,19 +376,23 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                         </tbody>
                     </table>
 
-                    <div className="pagination-controls">
+                    <div className="flex flex-row justify-between text-sm mx-4 my-3 items-center">
                         <button 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1,1))} 
-                            style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}>
+                            style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}
+                            className='font-semibold text-[#FCA311]'
+                        >
                             <FontAwesomeIcon className='page-icon' icon={faArrowLeft} size="sm" color="#FCA311" /> 
                             Prev
                         </button>
 
-                        <span>Page {currentPage} of {Math.ceil(programs.length / rowsPerPage)} </span>
+                        <span className='font-semibold'>Page {currentPage} of {Math.ceil(programs.length / rowsPerPage)} </span>
 
                         <button 
                             onClick = {() => setCurrentPage(prev => prev < Math.ceil(programs.length/rowsPerPage) ? prev +1 : prev )} 
-                            style={{ visibility: currentPage === Math.ceil(programs.length/rowsPerPage) ? 'hidden' : 'visible' }}>
+                            style={{ visibility: currentPage === Math.ceil(programs.length/rowsPerPage) ? 'hidden' : 'visible' }}
+                            className='font-semibold text-[#FCA311]'
+                        >
                             Next 
                             <FontAwesomeIcon className='page-icon' icon={faArrowRight} size="sm" color="#FCA311" /> 
                         </button>

@@ -1,10 +1,13 @@
 from flask import Blueprint, jsonify, request
+from flask_cors import CORS
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from config import DB_CONFIG
 
 colleges_bp = Blueprint("colleges_bp", __name__, url_prefix="/api")
+CORS(colleges_bp)
 
+    
 def get_db_connection():
     try:
         conn = psycopg2.connect(**DB_CONFIG)
@@ -172,7 +175,21 @@ def search_college(keyword):
 
 
 
+@colleges_bp.route('/college_count', methods=['GET'])
+def get_college_count():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
+        cur.execute("SELECT COUNT(*) FROM colleges;" )
+        count = cur.fetchone()[0]
+
+        cur.close()
+        conn.close()
+
+        return jsonify({"count": count}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 

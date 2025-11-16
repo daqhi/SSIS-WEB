@@ -51,17 +51,10 @@ body {
     box-shadow: 0 0 5 rgba(0, 0, 0, 0.1);
 }
 
-.side-image {
-    max-width: 400px;
-    height: auto;
-    border-radius: 16px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
 .form-box {
     max-width: 100%;
-    /* background: #f1f7fe; */
-    /* overflow: hidden; */
+    background: #f1f7fe; 
+     overflow: hidden; 
     border-radius: 16px;
     color: #010101;
     text-align: center;
@@ -69,191 +62,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
+} 
 
-
-
-.form-card-container {
-    width: 400px;
-    height: 500px;
-    position: relative;
-    padding: 50px;
-    border-radius: 15px;;
-    background-color: #ffffff;
-
-}
-.form-card-container h1 {
-    font-weight: bold;
-    font-size: 2.4rem;
-    margin: 0px 0px 1% 0px;
-    color:#292828;
-}
-.form-card-container p {
-    font-size: 1rem;
-    color: #666;
-    margin: 0px 0 0 0px;
-}
-
-
-.form-input {
-    text-align: left;
-    overflow: hidden;
-    border-radius: 8px;
-    margin: 25px 0px 25px 0px;
-    max-width: 100%;
-    position: relative;
-}
-
-.form-label {
-    font-size: 15px;
-    color: #444;
-    font-weight: bold;
-}
-
-input {
-    background: none;
-    height: 18px;
-    margin: 0px 10px 10px 0px;
-    width: 100%;
-    border-radius: 8px;
-    border-bottom: 1px solid #eee;
-    border-style: solid;
-    border-width: 1px;
-    padding: 8px 10px;
-    font-size: 15px;
-    max-width: 93%;
-}
-
-.input-field{
-    border: 1px solid black; /* plain solid line */
-    outline: none;           /* removes glow/blue outline when focused */
-    border-radius: 8px;        /* removes rounded corners */
-    box-shadow: none; 
-    margin-bottom: 10px;
-}
-
-
-.form-section {
-    font-size: 15px;
-    margin-top: 25px;
-    display: flex;
-}
-.form-section button {
-    font-family: 'Montserrat';
-    background-color: #ffffff00;
-    border-width: 0px;
-    /* font-weight: bold; */
-    font-size:medium;
-    color: #0066ff;
-    transition: color .3s ease;
-}
-.form-section button:hover {
-    color: #FCA311;
-    text-decoration: underline;
-}
-
-/*Button*/
-.btn {
-    background-color: #FCA311;
-    color: #fff;
-    border: 0;
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-    transition: background-color .3s ease;
-}
-
-.btn:hover,
-.btn-google:hover {
-    box-shadow: 0 0 10px #07070740; 
-    transition: box-shadow .3s ease;
-}
-
-.forgot-password-area {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-}
-.forgot-password-area label {
-    margin-bottom: 0px;
-}
-
-.forgot-password-btn {
-    font-family: "Montserrat";
-    font-weight: 500;
-    background: #ffffff00;
-    border-style: solid;
-    border-width: 0px;
-    color:#7e7e7e;
-    cursor: pointer;
-    text-decoration: underline;
-    padding-left: 100px;
-    margin: 0px;
-    height:20px;
-} .forgot-password-btn:hover {
-    color: #FCA311;
-    transition: all 0.3s ease;
-}
-
-
-.or-separator nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 20px 0;
-    width: 100%;
-}
-
-.breadcrumb-line {
-    flex: 1;
-    height: 1px;
-    background: #ccc;
-    margin: 0 10px;
-}
-
-.or {
-    font-size: 15px;
-    color: #888;
-    white-space: nowrap;
-}
-
-.other-options {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
-}
-
-.btn-google {
-    justify-content:center;
-    color: #444;
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 15px;
-    font-weight: 400;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    transition: background-color .3s ease, border-color .3s ease;
-}
-.btn-google:hover{
-    border-color: #535bf2;
-}
-
-
-
-
-
-
-
+ 
 
 .navbar {
   display: flex;
@@ -292,79 +103,12 @@ input {
 
 
 
-/* for animation */
-.signin-container {
-  opacity: 1;
-  transform: scale(1);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-}
-
-.signin-container.fade-out {
-  opacity: 0;
-  transform: scale(0.97);
-}
 
 
 
 
 
-
-
-
-
-
-
-/* for flipppinnngggg form*/
-
-.form-card-container {
-  perspective: 1200px;
-  width: 350px;
-  height: 500px;
-  position: relative;
-}
-
-.form-card {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transition: transform 0.6s cubic-bezier(.4,2,.6,1);
-  transform-style: preserve-3d;
-}
-
-.form-card-container.flipped .form-card {
-  transform: rotateY(180deg);
-}
-
-.form-card-face {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  top: 0;
-  left: 0;
-}
-
-.form-card-front {
-  z-index: 2;
-}
-
-.form-card-back {
-  transform: rotateY(180deg);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* From Uiverse.io by gharsh11032000 */ 
+/* From Uiverse.io by gharsh11032000  */
 .menu {
     font-size: 16px;
     line-height: 1.6;
@@ -393,7 +137,7 @@ input {
     align-items: center;
     position: absolute;
     top: 100%;
-    border-radius: 0 0 0px 0px; /* border sa drop down*/
+    border-radius: 0 0 0px 0px; /*  border sa drop down */
     left: 0;
     width: 230px;
     overflow: hidden;

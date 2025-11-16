@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons";
-import { library } from "@fortawesome/fontawesome-svg-core";
-import SignUpImg from "../../static/icons/react.svg";
-
+import { CircleUser, Lock } from 'lucide-react';
 import "../../static/css/entry.css";
-import Dashboard from "../dashboard/dashboards";
+
+import Dashboard from "../dashboard/dashboard";
 import ProtectedRoute from "../components/protected-route";
 
 
@@ -58,57 +55,65 @@ function SignIn() {
 
     return (
         <div className={`main-container page ${show ? 'show' : ''}`}>
-            <div className="form-card-container">
-                <h1>Sign In</h1>
-                <p>Welcome back, user!</p>
+            <div className="flex justify-center items-center bg-gradient-to-r from-[#5ba3ad] to-[#488f97] to-[#3a6f7f] w-full h-full ">
+                <div className="flex flex-row items-center h-150 w-1/2 rounded-2xl shadow-lg overflow-hidden bg-[#F8FFFF] py-10 pl-10">
+                    <div className="bg-white border-1 border-[#8EE1EA] rounded-xl w-1/2 p-10">
+                        <div className="mb-5">
+                            <h1 className="font-bold text-3xl">Sign In</h1>
+                            <p>Welcome back, user!</p>
+                        </div>
 
-                <div className="form-input">
-                    <label className="form-label">Username</label>
-                    <input 
-                        type="text" 
-                        placeholder="@username" 
-                        className="input-field" 
-                        value={username}
-                        onChange={(e)=> setUsername(e.target.value)}/>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex flex-row gap-2 h-10 rounded-lg border-2 border-[#17C1D3] flex items-center px-3">
+                                <CircleUser size={20} color={"#17C1D3"}/>
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    className="focus:outline-none w-full"
+                                    value={username}
+                                    onChange={(e)=> setUsername(e.target.value)}
+                                />
+                            </div>
 
-                    <div className="forgot-password-area">
-                        <label className="form-label">Password</label>
-                        <button className="forgot-password-btn">Forgot?</button>
+                            <div className="flex flex-row gap-2 h-10 rounded-lg border-2 border-[#17C1D3] flex items-center px-3">
+                                <Lock size={20} color={"#17C1D3"}/>
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    className="focus:outline-none w-full"
+                                    value={password}
+                                    onChange={(e)=> setPassword(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <button 
+                            className="bg-[#293339] hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-lg my-10 w-full transition ease-in-out duration-200" 
+                            onClick={handleSignIn}> 
+                            Sign In
+                        </button>
+
+                        <div className="flex flex-row gap-1 text-sm justify-start">
+                            <p>Don't have an account? </p>
+                            <button 
+                                className="text-start underline hover:text-orange-600 transition ease-in-out duration-200" 
+                                onClick={() => navigate("/sign-up")}>
+                                Create account
+                            </button>
+                        </div>
                     </div>
-                    <input 
-                        type="password" 
-                        placeholder="Enter password" 
-                        className="input-field" 
-                        value={password}
-                        onChange={(e)=> setPassword(e.target.value)}/>
-                </div>
 
-                <button className="btn" onClick={handleSignIn}> Sign In</button>
-                {/* if clicked, get info in database if data exists and data matches */}
-
-
-                <div className="or-separator">
-                    <nav>
-                        <span className="breadcrumb-line"></span>
-                        <span className="or">or</span>
-                        <span className="breadcrumb-line"></span>
-                    </nav>
-                </div>
-
-                <div className="other-options">
-                    <button className="btn-google">
-                        <FontAwesomeIcon icon={faGoogle} className="google-icon" /> Sign in
-                        with Google
-                    </button>
-                </div>
-                <div className="form-section">
-                    <p>Don't have an account? </p>
-                    <button onClick={() => navigate("/sign-up")}>Create account</button>
+                    <div className="flex items-center w-1/2 ">    
+                        <img className="h-100 w-full"
+                            src="src/static/images/entry-image.png" alt="Entry Illustration"></img>
+                    </div>
                 </div>
             </div>
 
-        </div>
+        </div> 
     );
 }
+
+
 
 export default SignIn;

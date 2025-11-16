@@ -178,16 +178,13 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
         }
     }
 
-
-
-
     return (
-        <div className='area-main-form'>
-            <h1 className='form-header'>Student Form</h1>
+        <div className='bg-gray-100 form-container p-10 pb-5'>
+            <h1 className='font-bold text-4xl mb-5 pt-10'>Student Form</h1>
             <hr />
-            <div className='form'>
+            <div className='mt-5'>
                 <form onSubmit={handleSubmit}>
-                    <label>ID Number: </label> <br />
+                    <label className="font-semibold text-base">ID Number: </label> <br />
                     <input
                         type="text"
                         value={idNum}
@@ -195,27 +192,30 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                         placeholder='YYYY-NNNN'
                         required
                         disabled={!!editingStudent}
+                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     /> <br />
                     
-                    <label>First Name: </label> <br />
+                    <label className="font-semibold text-base">First Name: </label> <br />
                     <input
                         type="text"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder='Enter first name'
                         required
+                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     /> <br />
 
-                    <label>Last Name: </label> <br />
+                    <label className="font-semibold text-base">Last Name: </label> <br />
                     <input
                         type="text"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder='Enter last name'
                         required
+                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     /> <br />
 
-                    <label>Sex: </label> <br />
+                    <label className="font-semibold text-base">Sex: </label> <br />
                     <select
                         value={sex}
                         onChange={(e) => setSex(e.target.value)}
@@ -226,7 +226,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                         <option value="Male">Male</option>
                     </select>
 
-                    <label>Year Level: </label> <br />
+                    <label className="font-semibold text-base">Year Level: </label> <br />
                     <select
                         value={yearLevel}
                         onChange={(e) => setYearLevel(e.target.value)}
@@ -239,7 +239,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                         <option value='4'>4</option>
                     </select>
 
-                    <label>Program: </label>
+                    <label className="font-semibold text-base">Program: </label>
                     <select 
                         value={program || "None"}
                         onChange={(e) => setProgram(e.target.value)}
@@ -255,7 +255,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
 
 
                     <div className='add-button-container'>
-                        <button type="submit" className='add-student'>
+                        <button type="submit" className='bg-[#FCA311] w-full w-full h-10 text-white font-bold hover:bg-[#e5940e]'>
                             Submit 
                         </button>
                     </div>
@@ -270,7 +270,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
 
 
 
-// ===================== PROGRAM DIRECTORY ===================== //
+// ===================== STUDENT DIRECTORY ===================== //
 
 function StudentDirectory( {refreshKey, onEditStudent }) {
     const [students, setStudents] = useState([])
@@ -333,26 +333,30 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
         setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     }
 
-    // //FIX: NAA PA TOGGLE ISSUE
-    // function toggleSortYearLevel() {
-    //     const sorted = [...students].sort((a, b) => {
-    //         return sortOrder === "asc"
-    //             ? a.yearlevel.localeCompare(b.yearlevel)
-    //             : b.yearlevel.localeCompare(a.yearlevel);
-    //     });
-    //     setStudents(sorted);
-    //     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    // }
-
-    function toggleSortProgram() {
+    function toggleSortYearLevel() {
         const sorted = [...students].sort((a, b) => {
             return sortOrder === "asc"
-                ? a.programcode.localeCompare(b.programcode)
-                : b.programcode.localeCompare(a.programcode);
+                ? Number(a.yearlevel) - Number(b.yearlevel)
+                : Number(b.yearlevel) - Number(a.yearlevel);
         });
+
         setStudents(sorted);
         setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     }
+
+    function toggleSortProgram() {
+        const sorted = [...students].sort((a, b) => {
+            const aCode = a.programcode ? a.programcode.toString() : '';
+            const bCode = b.programcode ? b.programcode.toString() : '';
+            return sortOrder === "asc" 
+                ? aCode.localeCompare(bCode) 
+                : bCode.localeCompare(aCode);
+        });
+
+        setStudents(sorted);
+        setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+    }
+
 
     //for deleteiing students
     async function handleDelete(idNum) {
@@ -395,56 +399,54 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
 
     return (
         <div className='area-main-directory'>
-            <h1 className='directory-header'>Student Directory</h1>
-
-            <div className='functions'>
-                <div className='function-search-item'>
-                    <label>Search Area</label>
-                    <div className='search-area'>
+            <div className='flex flex-row justify-between items-center mt-8 mb-10'>
+                <h1 className="font-bold text-4xl">Student Directory</h1>
+                <div className='text-sm w-72'>
+                    <div className='border-1 border-gray-300 p-2 flex items-center gap-2 bg-white'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
+                        <input className='w-full focus:outline-none w-full' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
                     </div>
                 </div>
             </div>
 
 
-            <div>
-                <div className="table">
-                    <table>
+            <div className='w-full'>
+                <div className="w-full table">
+                    <table className='text-sm'>
                         <thead>
-                        <tr>
+                        <tr className='border-b-2 border-gray-300'>
                             <th>
-                                <button className='sort-button' onClick={toggleSortIdNum}> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortIdNum}> 
                                     ID Num <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
                             <th>
-                                <button className='sort-button' onClick={toggleSortFirstName}> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortFirstName}> 
                                     First Name <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
                             <th>
-                                <button className='sort-button' onClick={toggleSortLastName}> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortLastName}> 
                                     Last Name <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
                             <th>
-                                <button className='sort-button' onClick={toggleSortSex}> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortSex}> 
                                     Sex <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
                             <th>
-                                <button className='sort-button' > 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortYearLevel} > 
                                     Year Level <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
                             <th>
-                                <button className='sort-button' onClick={toggleSortProgram}> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortProgram}> 
                                     Program <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
                             <th>
-                                <button className='sort-button'> 
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1'> 
                                     Actions <FontAwesomeIcon icon={faSort} size='xs' color='#f5f5f500'/> 
                                 </button>
                             </th>
@@ -472,19 +474,24 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
                             ))}
                         </tbody>
                     </table>
-                    <div className="pagination-controls">
+
+                    <div className="flex flex-row justify-between text-sm mx-4 my-3 items-center">
                         <button 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1,1))} 
-                            style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}>
+                            style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}
+                            className='font-semibold text-[#FCA311]'
+                        >
                             <FontAwesomeIcon className='page-icon' icon={faArrowLeft} size="sm" color="#FCA311" /> 
                             Prev
                         </button>
 
-                        <span>Page {currentPage} of {Math.ceil(students.length / rowsPerPage)} </span>
+                        <span className='font-semibold'>Page {currentPage} of {Math.ceil(students.length / rowsPerPage)} </span>
 
                         <button 
                             onClick = {() => setCurrentPage(prev => prev < Math.ceil(students.length/rowsPerPage) ? prev +1 : prev )}
-                            style={{ visibility: currentPage === Math.ceil(students.length/rowsPerPage) ? 'hidden' : 'visible' }} >
+                            style={{ visibility: currentPage === Math.ceil(students.length/rowsPerPage) ? 'hidden' : 'visible' }} 
+                            className='font-semibold text-[#FCA311]'
+                        >
                             Next 
                             <FontAwesomeIcon className='page-icon' icon={faArrowRight} size="sm" color="#FCA311" /> 
                         </button>

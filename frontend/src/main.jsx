@@ -2,11 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import "./static/css/index.css";
 
 import SignIn from "./templates/entry/sign-in.jsx";
 import SignUp from "./templates/entry/sign-up.jsx";
 import ProtectedRoute from './templates/components/protected-route.jsx'
-import Dashboard from './templates/dashboard/dashboards.jsx'
+import Dashboard from './templates/dashboard/dashboard.jsx'
 import Analytics from './templates/analytics/analytics-page.jsx'
 import CollegePage from './templates/college/college-page.jsx'
 import ProgramPage from './templates/program/program-page.jsx'

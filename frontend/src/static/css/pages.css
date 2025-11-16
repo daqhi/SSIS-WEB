@@ -19,7 +19,7 @@ body {
     font-family:'Montserrat', 'Charter';
     max-width:100%;
     max-height: 90vh;
-    background: #ffffff;
+    background: white;
     display: block;
 }
 
@@ -207,7 +207,7 @@ body {
 }
 
 /* Icon inside the select */
-.function-item .dropdown-icon {
+/* .function-item .dropdown-icon {
     position: absolute;
     right: 8px;
     top: 50%;
@@ -233,27 +233,6 @@ body {
 
 }
 
-.search-area {
-    display: flex;
-    align-items: center;
-    border-width: 1px;
-    border-style: solid;
-    border-color: #aaa;
-    font-size: inherit;
-    padding: 5px;
-    height: 15px;
-} .search-area input {
-    border: none;
-    margin: 0px;
-    padding: 0px 0px 0px 6px;
-    max-width: 100%;
-    font-family: "Montserrat";
-    font-size: 13px;
-} .search-area input:focus {
-    outline: none;
-    border: none;
-} 
-
 
 
 
@@ -268,7 +247,7 @@ body {
 
 /* table stuff */
 .table {
-    max-height: 460px;   
+    max-height: 800px;   
     max-width: 100%;
     overflow: auto; 
     border: 1px solid #ddd;
@@ -277,7 +256,6 @@ body {
 }
 
 .table table {
-    width: 100%;
     border-collapse: collapse;
 }
 
@@ -288,10 +266,9 @@ body {
     position: sticky;
     top: 0;
     z-index: 1; 
-}
-
-.table thead th:nth-child(6) { width: 25%; }  /* ID */
-.table thead th:nth-child(8) { width: 12%; } /* Actions */
+}  
+.table thead th:nth-child(6) { width: 25%; }ID 
+.table thead th:nth-child(8) { width: 12%; }  Actions 
 
 .table th {
     padding: 5px;
@@ -309,11 +286,10 @@ body {
 .sort-button {
     border: 0 none #ffffff00;
     font-family: 'Montserrat';
-    background-color: #ffffff00;
+    background-color: white;
 } .sort-button:hover{
     text-decoration:underline;
 }
-
 
 .edit {
     padding:2px;
@@ -375,7 +351,7 @@ body {
     max-height: fit-content;
 }
 
-.form {
+/* .form {
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -391,8 +367,6 @@ body {
     width:300px;
     font-family: "Montserrat";
     font-size: 13px;
-} .form input:focus {
-    outline: none;
 } .form input:hover {
     box-shadow: 0 0 5px rgba(144, 144, 144, 0.5);
     transition: box-shadow 0.3s ease;
@@ -405,7 +379,7 @@ body {
     color: #787878;
     padding: 5px 5px 5px 10px;
     height: 27px;
-}
+}  */
 
 
 .form-wrapper {
@@ -423,7 +397,7 @@ body {
     transform: translateX(0);
 }
 
-/* Make sure the form itself expands fully */
+ /* Make sure the form itself expands fully */
 .form-wrapper .area-main-form {
     width: 75%;
     height: 100vh;
@@ -435,7 +409,7 @@ body {
 
 
 
-label {
+/* label {
     font-size: 12px;
     font-weight: bold;
     color: #6b6b6b;
@@ -443,7 +417,7 @@ label {
     margin-bottom: 5px;
     display: inline-block;
     width: 100px;
-}
+} */
 
 /* input {
     font-size: small;

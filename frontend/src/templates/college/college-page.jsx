@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faArrowLeft, faArrowRight, } from "@fortawesome/free-solid-svg-icons";
-import "../../static/css/pages.css";
+import { faMagnifyingGlass, faSort, faPenToSquare, faTrash, faArrowLeft, faArrowRight, } from "@fortawesome/free-solid-svg-icons";
 import Navbar from "../components/navbar";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -70,6 +69,8 @@ export default function CollegePage() {
         </div>
     );
 }
+
+
 
 // COLLEGE FORM (Add or Edit)
 function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
@@ -143,14 +144,12 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
     }
 
     return (
-        <div className="area-main-form">
-            <h1 className="form-header">
-                College Form
-            </h1>
+        <div className="bg-gray-100 h-full p-10 shadow-md pb-68">
+            <h1 className="font-bold text-4xl mb-5 mt-10"> College Form </h1>
             <hr />
-            <div className="form">
+            <div className="my-7">
                 <form onSubmit={handleSubmit}>
-                    <label>College Code:</label>
+                    <label className="font-semibold text-base">College Code:</label>
                     <br />
                     <input
                         type="text"
@@ -158,10 +157,11 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
                         onChange={(e) => setCollegeCode(e.target.value)}
                         placeholder="e.g. CCS"
                         required
+                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     />
                     <br />
 
-                    <label>College Name:</label>
+                    <label className="font-semibold text-base">College Name:</label>
                     <br />
                     <input
                         type="text"
@@ -169,6 +169,7 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
                         onChange={(e) => setCollegeName(e.target.value)}
                         placeholder="e.g. College of Computer Studies"
                         required
+                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     />
                     <br />
 
@@ -269,87 +270,77 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
 
     return (
         <div className="area-main-directory">
-            <h1 className="directory-header">College Directory FIX: ahmm ang sort</h1>
-
-            <div className='functions'>
-                <div className='function-search-item'>
-                    <label>Search Area</label>
-                    <div className='search-area'>
+            <div className='flex flex-row justify-between items-center mt-8 mb-10'>
+                <h1 className="font-bold text-4xl">College Directory</h1>
+                <div className='text-sm w-72'>
+                    <div className='border-1 border-gray-300 p-2 flex items-center gap-2 bg-white'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input type='text' placeholder='Type in a keyword or name...' onChange={(e) => handleSearch(e.target.value)} />
+                        <input className='w-full focus:outline-none w-full' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
                     </div>
                 </div>
-
-                {/* 
-                <div className='function-item'>
-                    <label>    </label>
-                    <button>Search</button>
-                </div> */}
             </div>
 
-            <div className="table">
-                <table>
-                    <thead>
-                        <tr>
-                        <th>
-                            <button className="sort-button" onClick={toggleSortCollegeCode}>
-                                College Code{" "}
-                                <FontAwesomeIcon icon={faSort} size="xs" color="#999" />
-                            </button>
-                        </th>
-                        <th>
-                            <button className="sort-button" onClick={toggleSortCollegeName}>
-                                College Name{" "}
-                                <FontAwesomeIcon icon={faSort} size="xs" color="#999" />
-                            </button>
-                        </th>
-                        <th>Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {colleges.length > 0 ? (
-                            colleges.map((c) => (
-                            <tr key={c.collegecode}>
-                                <td>{c.collegecode}</td>
-                                <td>{c.collegename}</td>
-                                <td>
-                                    <button className="edit" onClick={() => onEditCollege(c)} >
-                                        <FontAwesomeIcon icon={faPenToSquare} size="xs" />
-                                    </button>
-                                    <button
-                                        className="delete"
-                                        onClick={() => handleDelete(c.collegecode)}
-                                    >
-                                        <FontAwesomeIcon icon={faTrash} size="xs" color="#FCA311" />
-                                    </button>
-                                </td>
+            <div className="w-full">
+                <div className="w-full table">
+                    <table className="text-sm">
+                        <thead>
+                            <tr className='border-b-2 border-gray-300'>
+                            <th>
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortCollegeCode}>
+                                    College Code{" "}
+                                    <FontAwesomeIcon icon={faSort} size="xs" color="#999" />
+                                </button>
+                            </th>
+                            <th>
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortCollegeName}>
+                                    College Name{" "}
+                                    <FontAwesomeIcon icon={faSort} size="xs" color="#999" />
+                                </button>
+                            </th>
+                            <th>Actions</th>
                             </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="3" style={{ textAlign: "center", padding: "10px" }}>No colleges found.</td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-
-                <div className="pagination-controls">
-                    <button 
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1,1))} 
-                        style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}>
-                        <FontAwesomeIcon className='page-icon' icon={faArrowLeft} size="sm" color="#FCA311" /> 
-                        Prev
-                    </button>
-
-                    <span>Page {currentPage} of {Math.ceil(colleges.length / rowsPerPage)} </span>
-
-                    <button 
-                        onClick = {() => setCurrentPage(prev => prev < Math.ceil(colleges.length/rowsPerPage) ? prev +1 : prev )} 
-                        style={{ visibility: currentPage === Math.ceil(colleges.length/rowsPerPage) ? 'hidden' : 'visible' }}>
-                        Next 
-                        <FontAwesomeIcon className='page-icon' icon={faArrowRight} size="sm" color="#FCA311" /> 
-                    </button>
+                        </thead>
+                        <tbody>
+                            {currentColleges.length > 0 ? (
+                                colleges.map((c) => (
+                                <tr key={c.collegecode}>
+                                    <td>{c.collegecode}</td>
+                                    <td>{c.collegename}</td>
+                                    <td>
+                                        <button className="edit" onClick={() => onEditCollege(c)} >
+                                            <FontAwesomeIcon icon={faPenToSquare} size="xs" />
+                                        </button>
+                                        <button
+                                            className="delete"
+                                            onClick={() => handleDelete(c.collegecode)}
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} size="xs" color="#FCA311" />
+                                        </button>
+                                    </td>
+                                </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="3" style={{ textAlign: "center", padding: "10px" }}>No colleges found.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                    <div className="pagination-controls">
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1,1))}
+                            style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}>
+                            <FontAwesomeIcon className='page-icon' icon={faArrowLeft} size="sm" color="#FCA311" />
+                            Prev
+                        </button>
+                        <span>Page {currentPage} of {Math.ceil(colleges.length / rowsPerPage)} </span>
+                        <button
+                            onClick = {() => setCurrentPage(prev => prev < Math.ceil(colleges.length/rowsPerPage) ? prev +1 : prev )}
+                            style={{ visibility: currentPage === Math.ceil(colleges.length/rowsPerPage) ? 'hidden' : 'visible' }}>
+                            Next
+                            <FontAwesomeIcon className='page-icon' icon={faArrowRight} size="sm" color="#FCA311" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

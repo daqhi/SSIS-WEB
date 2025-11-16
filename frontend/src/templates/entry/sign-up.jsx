@@ -1,17 +1,14 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons";
-import { library } from "@fortawesome/fontawesome-svg-core";
-import SignUpImg from "../../static/icons/react.svg";
+import { CircleUser, Lock, Mail } from 'lucide-react';
 import "../../static/css/entry.css";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function SignUp() {
-    const [userName, setUserName] = useState("");
+    const [username, setUsername] = useState("");
     const [userEmail, setUserEmail] = useState("");
-    const [userPass, setUserPass] = useState("");
+    const [password, setPassword] = useState("");
     
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
@@ -21,18 +18,18 @@ export default function SignUp() {
 
 
     // Add user handler
-    async function addUser(e) {
+    async function handleSignUp(e) {
         e.preventDefault();
 
-        if (!userName || !userEmail || !userPass) {
+        if (!username || !userEmail || !password) {
             console.error("All fields required!");
             return;
         }
 
         console.log("Sending to backend:", {
-            username: userName,
+            username: username,
             email: userEmail,
-            password: userPass,
+            password: password,
         });
 
         try {
@@ -40,9 +37,9 @@ export default function SignUp() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    username: userName,
+                    username: username,
                     email: userEmail,
-                    password: userPass,
+                    password: password,
                 }),
             });
 
@@ -55,9 +52,9 @@ export default function SignUp() {
             }
 
             alert("User registered successfully!");
-            setUserName("");
+            setUsername("");
             setUserEmail("");
-            setUserPass("");
+            setPassword("");
         } catch (err) {
             console.error("Error submitting form:", err);
         }
@@ -65,9 +62,80 @@ export default function SignUp() {
 
 
     return (
-        
-        <div className="entire-page">
+        <div>
+
             <div className={`main-container page ${show ? 'show' : ''}`}>
+                <div className="flex justify-center items-center bg-gradient-to-r from-[#5ba3ad] to-[#488f97] to-[#3a6f7f] w-full h-full ">
+                    <div className="flex flex-row items-center h-150 w-1/2 rounded-2xl shadow-lg overflow-hidden bg-[#F8FFFF] py-10 pl-10">
+                        <div className="bg-white border-1 border-[#8EE1EA] rounded-xl w-1/2 p-10">
+                            <div className="mb-5">
+                                <h1 className="font-bold text-2xl">Sign Up</h1>
+                                <p>Create an account to get started!</p>
+                            </div>
+
+
+                            <div className="flex flex-col gap-3">
+                                <div className="flex flex-row gap-2 h-10 rounded-lg border-2 border-[#17C1D3] flex items-center px-3">
+                                    <CircleUser size={20} color={"#17C1D3"}/>
+                                    <input
+                                        type="text"
+                                        placeholder="Username"
+                                        className="focus:outline-none w-full"
+                                        value={username}
+                                        onChange={(e)=> setUsername(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="flex flex-row gap-2 h-10 rounded-lg border-2 border-[#17C1D3] flex items-center px-3">
+                                    <Mail size={20} color={"#17C1D3"}/>
+                                    <input
+                                        type="text"
+                                        placeholder="Email"
+                                        className="focus:outline-none w-full"
+                                        value={userEmail}
+                                        onChange={(e)=> setUserEmail(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="flex flex-row gap-2 h-10 rounded-lg border-2 border-[#17C1D3] flex items-center px-3">
+                                    <Lock size={20} color={"#17C1D3"}/>
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        className="focus:outline-none w-full"
+                                        value={password}
+                                        onChange={(e)=> setPassword(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+
+                            <button 
+                                className="bg-[#293339] hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-lg my-10 w-full transition ease-in-out duration-200" 
+                                onClick={handleSignUp}> 
+                                Sign Up
+                            </button>
+
+                            <div className="flex flex-row gap-1 text-sm justify-start">
+                                <p>Already have an account? </p>
+                                <button 
+                                    className="text-start underline hover:text-orange-600 transition ease-in-out duration-200" 
+                                    onClick={() => navigate("/sign-in")}>
+                                    Sign in
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center w-1/2 ">    
+                            <img className="h-100 w-full"
+                                src="src/static/images/entry-image.png" alt="Entry Illustration"></img>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        
+            {/* <div className={`main-container page ${show ? 'show' : ''}`}>
                 <div className='form-card-container'>
                     <h1>Sign Up</h1>
                     <p>Create an account</p>
@@ -127,10 +195,10 @@ export default function SignUp() {
                 </div>
                 {/* <div className="side-image-container">
                     <img src={SignUpImg} className="side-image" />
-                </div> */}
+                </div> 
             
             
-            </div>
+            </div> */}
         </div>
     );
 }
