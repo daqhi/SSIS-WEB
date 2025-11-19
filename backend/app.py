@@ -1,11 +1,15 @@
 from flask import Flask
 from flask_cors import CORS
+from supabase_functions import create_client
 from auth import auth_bp
 from colleges import colleges_bp
 from programs import programs_bp
 from students import students_bp
 from flask_mail import Mail, Message
 from config import Config
+from config import SupabaseConfig
+
+supabase = create_client(SupabaseConfig.URL, SupabaseConfig.KEY)
 
 app = Flask(__name__)
 

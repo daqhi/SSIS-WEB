@@ -1,8 +1,9 @@
 from dotenv import load_dotenv
 import os
-
+from supabase import create_client, Client
 
 load_dotenv()
+
 
 DB_CONFIG = {
     "host": os.getenv("DATABASE_HOST"),
@@ -11,6 +12,11 @@ DB_CONFIG = {
     "user": os.getenv("DATABASE_USER"),
     "password": os.getenv("DATABASE_PASSWORD")
 }
+
+
+class SupabaseConfig:
+    URL = os.environ.get("SUPABASE_URL")
+    KEY = os.environ.get("SUPABASE_KEY")
 
 
 class Config:
