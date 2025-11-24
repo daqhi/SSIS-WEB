@@ -9,6 +9,7 @@ import '../../static/css/dashboard.css'
 import GradientText from '../components/shiny-text.jsx';
 import { MoveRight } from "lucide-react";
 import Footer from '../components/footer.jsx';
+import supabase from "../../lib/supabaseClient.js";
 
 function Dashboard() {
     const navigate = useNavigate();
@@ -21,34 +22,67 @@ function Dashboard() {
         { icon: faGraduationCap, key: "Students", navigate: "/student-page", label: "Total Students", gradient: "from-[#18181b] to-[#1e2b38] to-[#293B4D]" }
     ];
 
+    // Fetch counts from backend API
+    // useEffect(() => {
+    //     const fetchCounts = async () => {
+    //         try {
+    //             setLoading(true);
+
+    //             const collegeRes = await fetch('/api/college_count');
+    //             const programRes = await fetch('/api/program_count');
+    //             const studentRes = await fetch('/api/student_count');
+
+    //             const collegeData = await collegeRes.json();
+    //             const programData = await programRes.json();
+    //             const studentData = await studentRes.json();
+
+    //             setCounts({
+    //                 overall: {
+    //                     Colleges: collegeData.count,
+    //                     Programs: programData.count,
+    //                     Students: studentData.count,
+    //                 },
+    //             });
+
+    //             setLoading(false);
+    //         } catch (error) {
+    //             console.error('Error fetching counts:', error);
+    //             setLoading(false);
+    //         }
+    //     };
+    //     fetchCounts();
+    // }, []);
+
+    // Fetch counts from Supabase (alternative method)
     useEffect(() => {
-        const fetchCounts = async () => {
-            try {
-                setLoading(true);
+        const loadCounts = async () => {
+        setLoading(true);
+        try {
+            const collegesRes = await supabase
+            .from('colleges')
+            .select('*', { count: 'exact', head: true });
+            const programsRes = await supabase
+            .from('programs')
+            .select('*', { count: 'exact', head: true });
+            const studentsRes = await supabase
+            .from('students')
+            .select('*', { count: 'exact', head: true });
 
-                const collegeRes = await fetch('/api/college_count');
-                const programRes = await fetch('/api/program_count');
-                const studentRes = await fetch('/api/student_count');
-
-                const collegeData = await collegeRes.json();
-                const programData = await programRes.json();
-                const studentData = await studentRes.json();
-
-                setCounts({
-                    overall: {
-                        Colleges: collegeData.count,
-                        Programs: programData.count,
-                        Students: studentData.count,
-                    },
-                });
-
-                setLoading(false);
-            } catch (error) {
-                console.error('Error fetching counts:', error);
-                setLoading(false);
-            }
+            setCounts({
+                overall: {
+                    Colleges: collegesRes.count ?? 0,
+                    Programs: programsRes.count ?? 0,
+                    Students: studentsRes.count ?? 0,
+                }
+            });
+        } catch (err) {
+            console.error('Supabase count error', err);
+        } finally {
+            setLoading(false);
+        }
         };
-        fetchCounts();
+
+        loadCounts();
     }, []);
 
 
@@ -72,6 +106,7 @@ function Dashboard() {
                         <h3 className="mx-3 text-gray-200 pb-4">Manage, track, and simplify your academic data in one place.  </h3>
                     </div>
                 </div>
+
                 <div>
                     <div className='lower-ctn'>
                         {/* analytics, directories & forms */}

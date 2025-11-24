@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import supabase from "./lib/supabaseClient.js";
 import "./static/css/index.css";
 
 import SignIn from "./templates/entry/sign-in.jsx";
@@ -74,5 +75,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 );
 
 
-
-// "xs", "sm", "lg", "xl", "2x", "3x", "4x", "5x", "6x", "7x", "8x", "9x", "10x"

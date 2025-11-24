@@ -1,0 +1,6 @@
+Flask
+flask-cors
+python-dotenv
+psycopg2-binary
+flask-mail
+supabase

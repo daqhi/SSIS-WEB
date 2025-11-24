@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-from supabase import create_client, Client
+
 
 load_dotenv()
 
@@ -15,8 +15,8 @@ DB_CONFIG = {
 
 
 class SupabaseConfig:
-    URL = os.environ.get("SUPABASE_URL")
-    KEY = os.environ.get("SUPABASE_KEY")
+    URL = os.getenv("SUPABASE_URL")
+    KEY = os.getenv("SUPABASE_KEY")
 
 
 class Config:

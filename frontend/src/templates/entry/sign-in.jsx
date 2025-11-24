@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CircleUser, Lock } from 'lucide-react';
 import "../../static/css/entry.css";
+import supabase from "../../lib/supabaseClient";
 
 import Dashboard from "../dashboard/dashboard";
 import ProtectedRoute from "../components/protected-route";
@@ -14,13 +15,52 @@ function SignIn() {
     const [show, setShow] = useState(false);
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
+    const [email, setEmail] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
 
     const [fadeOut, setFadeOut] = useState(false);
 
-
-
     useEffect(() => { setShow(true) }, []);
 
+
+    // Supabase sign-in
+    async function handleSupabaseSignIn() {
+        if(!email || !password) {
+            alert ("Please enter both email and password.")
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                console.error("Supabase signin error:", error.message);
+                alert(`Sign in failed: ${error.message}`);
+                return;
+            }
+
+            if (data?.user) {
+                console.log("User signed in successfully:", data.user);
+                localStorage.setItem("isLoggedIn", "true");
+                localStorage.setItem("username", data.user.user_metadata?.username || data.user.email);
+                navigate("/dashboard");
+            }
+
+        } catch (err) {
+            console.error("Error signing in:", err);
+            alert("Server error. Check console.");
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+
+    // Backend sign-in
     async function handleSignIn() {
         if(!username || !password) {
             alert ("Please enter both username and password.")
@@ -56,7 +96,7 @@ function SignIn() {
     return (
         <div className={`main-container page ${show ? 'show' : ''}`}>
             <div className="bg-gradient-to-br from-[#18181b] via-[#1e2b38] to-[#293B4D] flex justify-center items-center w-full h-full ">
-                <div className="flex flex-row items-center h-150 w-1/2 rounded-2xl shadow-lg overflow-hidden bg-[#F8FFFF] py-10 pl-10">
+                <div className="flex flex-row items-center h-150 rounded-2xl shadow-lg overflow-hidden bg-[#F8FFFF] py-10 pl-10">
                     <div className="bg-white border-1 border-[#8EE1EA] rounded-xl w-1/2 p-10">
                         <div className="mb-5">
                             <h1 className="font-bold text-3xl">Sign In</h1>
