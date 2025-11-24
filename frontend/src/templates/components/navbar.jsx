@@ -4,12 +4,23 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faUser, faDoorOpen, } from "@fortawesome/free-solid-svg-icons";
 import { ChevronDown } from "lucide-react";
 import "../../static/css/navbar.css";
+import { getCurrentUsername, getCurrentUserEmail, logout } from "../../lib/auth.js";
 
 function Navbar() {
     const navigate = useNavigate();
     const [openMenu, setOpenMenu] = useState(null);
     const formsRef = useRef(null);
     const directoriesRef = useRef(null);
+    
+    // Get user info from localStorage
+    const [username, setUsername] = useState("");
+    const [userEmail, setUserEmail] = useState("");
+
+    useEffect(() => {
+        // Fetch user data on component mount
+        setUsername(getCurrentUsername() || "Guest");
+        setUserEmail(getCurrentUserEmail() || "No email");
+    }, []);
 
     // to close dropdown when clicking outside
     useEffect(() => {
@@ -79,9 +90,8 @@ function Navbar() {
                     <div className="item">
                         <div className="nav-right">
                             <div className="user-info">
-                                {/* FETCH DETAILS FROM LOG IN */}
-                                <label>@eliabado</label>
-                                <p>eliabado24@example.com</p>
+                                <label>@{username}</label>
+                                <p>{userEmail}</p>
                             </div>
                             <img
                                 src="/src/static/icons/default.jpg"
@@ -106,11 +116,10 @@ function Navbar() {
                             <div className="submenu-item">
                                 <a
                                     className="submenu-link"
+                                    style={{ cursor: "pointer" }}
                                     onClick={() => {
-                                        localStorage.removeItem("isLoggedIn");
-                                        localStorage.removeItem("username");
-                                        localStorage.removeItem("email");
-                                        window.location.href = "/sign-in"; // full reload to clear all state
+                                        logout(); // Use the logout function from auth.js
+                                        navigate("/sign-in");
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faDoorOpen} style={{color:"#767676ff", paddingRight: "10px"}}/>

@@ -1,93 +1,83 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CircleUser, Lock } from 'lucide-react';
 import "../../static/css/entry.css";
 import supabase from "../../lib/supabaseClient";
-
-import Dashboard from "../dashboard/dashboard";
-import ProtectedRoute from "../components/protected-route";
-
+import bcrypt from 'bcryptjs';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
-function SignIn() {
+export default function SignIn() {
     const navigate = useNavigate();
     const [show, setShow] = useState(false);
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
-    const [email, setEmail] = useState("")
     const [isLoading, setIsLoading] = useState(false)
-
-    const [fadeOut, setFadeOut] = useState(false);
 
     useEffect(() => { setShow(true) }, []);
 
 
-    // Supabase sign-in
-    async function handleSupabaseSignIn() {
-        if(!email || !password) {
-            alert ("Please enter both email and password.")
+    // Sign-in using backend API (bypasses Supabase RLS)
+    async function handleSupabaseSignIn(e) {
+        e.preventDefault();
+        setIsLoading(true);
+
+        if (!username || !password) {
+            alert("Please enter both username and password.");
+            setIsLoading(false);
             return;
         }
 
-        setIsLoading(true);
-
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
+            console.log("Attempting login with:", username);
+
+            // Query Supabase for user by username only (not password)
+            const { data: users, error } = await supabase
+                .from("users")
+                .select("*")
+                .eq("username", username);
 
             if (error) {
-                console.error("Supabase signin error:", error.message);
-                alert(`Sign in failed: ${error.message}`);
+                console.error("Supabase query error:", error.message);
+                alert("An error occurred during login.");
+                setIsLoading(false);
                 return;
             }
 
-            if (data?.user) {
-                console.log("User signed in successfully:", data.user);
-                localStorage.setItem("isLoggedIn", "true");
-                localStorage.setItem("username", data.user.user_metadata?.username || data.user.email);
-                navigate("/dashboard");
+            if (!users || users.length === 0) {
+                alert("Invalid username or password.");
+                setIsLoading(false);
+                return;
             }
 
+            // If multiple users found, take the first one (but ideally username should be unique)
+            const user = users[0];
+
+            // Verify password using bcrypt
+            const passwordMatch = await bcrypt.compare(password, user.userpass);
+            
+            if (!passwordMatch) {
+                alert("Invalid username or password.");
+                setIsLoading(false);
+                return;
+            }
+
+            console.log("User logged in:", user);
+
+            // Save login
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("userid", user.userid);
+            localStorage.setItem("username", user.username);
+            localStorage.setItem("useremail", user.useremail);
+
+            alert(`Welcome back, ${user.username}!`);
+            navigate("/dashboard");
+
         } catch (err) {
-            console.error("Error signing in:", err);
-            alert("Server error. Check console.");
+            console.error("Unexpected login error:", err);
+            alert("Something went wrong logging in.");
         } finally {
             setIsLoading(false);
-        }
-    }
-
-
-    // Backend sign-in
-    async function handleSignIn() {
-        if(!username || !password) {
-            alert ("Please enter both username and password.")
-            return;
-        }
-
-        try {
-            const res = await fetch (`${API}/api/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
-            });
-
-            const data = await res.json()
-
-            if(res.ok) {
-
-                localStorage.setItem("isLoggedIn", "true");
-                localStorage.setItem("username", data.username);
-
-                navigate("/dashboard");
-            } else {
-                alert(data.error || "Login failed.");
-            }
-        } catch (err) {
-            console.error("Error singin in:", err)
-            alert("server error. check console")
         }
     }
 
@@ -128,9 +118,10 @@ function SignIn() {
                         </div>
 
                         <button 
-                            className="bg-[#293339] hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-lg my-10 w-full transition ease-in-out duration-200" 
-                            onClick={handleSignIn}> 
-                            Sign In
+                            className="bg-[#293339] hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-lg my-10 w-full transition ease-in-out duration-200 disabled:opacity-50" 
+                            onClick={handleSupabaseSignIn}
+                            disabled={isLoading}> 
+                            {isLoading ? "Signing In..." : "Sign In"}
                         </button>
 
                         <div className="flex flex-row gap-1 text-sm justify-start">
@@ -155,5 +146,3 @@ function SignIn() {
 }
 
 
-
-export default SignIn;

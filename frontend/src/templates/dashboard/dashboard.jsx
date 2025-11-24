@@ -10,6 +10,7 @@ import GradientText from '../components/shiny-text.jsx';
 import { MoveRight } from "lucide-react";
 import Footer from '../components/footer.jsx';
 import supabase from "../../lib/supabaseClient.js";
+import { getCurrentUserId } from "../../lib/auth.js";
 
 function Dashboard() {
     const navigate = useNavigate();
@@ -22,64 +23,53 @@ function Dashboard() {
         { icon: faGraduationCap, key: "Students", navigate: "/student-page", label: "Total Students", gradient: "from-[#18181b] to-[#1e2b38] to-[#293B4D]" }
     ];
 
-    // Fetch counts from backend API
-    // useEffect(() => {
-    //     const fetchCounts = async () => {
-    //         try {
-    //             setLoading(true);
-
-    //             const collegeRes = await fetch('/api/college_count');
-    //             const programRes = await fetch('/api/program_count');
-    //             const studentRes = await fetch('/api/student_count');
-
-    //             const collegeData = await collegeRes.json();
-    //             const programData = await programRes.json();
-    //             const studentData = await studentRes.json();
-
-    //             setCounts({
-    //                 overall: {
-    //                     Colleges: collegeData.count,
-    //                     Programs: programData.count,
-    //                     Students: studentData.count,
-    //                 },
-    //             });
-
-    //             setLoading(false);
-    //         } catch (error) {
-    //             console.error('Error fetching counts:', error);
-    //             setLoading(false);
-    //         }
-    //     };
-    //     fetchCounts();
-    // }, []);
-
-    // Fetch counts from Supabase (alternative method)
+    // Fetch counts from Supabase filtered by current user's userid
     useEffect(() => {
         const loadCounts = async () => {
-        setLoading(true);
-        try {
-            const collegesRes = await supabase
-            .from('colleges')
-            .select('*', { count: 'exact', head: true });
-            const programsRes = await supabase
-            .from('programs')
-            .select('*', { count: 'exact', head: true });
-            const studentsRes = await supabase
-            .from('students')
-            .select('*', { count: 'exact', head: true });
-
-            setCounts({
-                overall: {
-                    Colleges: collegesRes.count ?? 0,
-                    Programs: programsRes.count ?? 0,
-                    Students: studentsRes.count ?? 0,
+            setLoading(true);
+            try {
+                const userid = getCurrentUserId();
+                
+                if (!userid) {
+                    console.error('No userid found - user may not be logged in');
+                    setLoading(false);
+                    return;
                 }
-            });
-        } catch (err) {
-            console.error('Supabase count error', err);
-        } finally {
-            setLoading(false);
-        }
+
+                console.log('Fetching counts for userid:', userid);
+
+                // Query counts filtered by userid
+                const collegesRes = await supabase
+                    .from('colleges')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('userid', userid);
+                
+                const programsRes = await supabase
+                    .from('programs')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('userid', userid);
+                
+                const studentsRes = await supabase
+                    .from('students')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('userid', userid);
+
+                console.log('Colleges count:', collegesRes.count);
+                console.log('Programs count:', programsRes.count);
+                console.log('Students count:', studentsRes.count);
+
+                setCounts({
+                    overall: {
+                        Colleges: collegesRes.count ?? 0,
+                        Programs: programsRes.count ?? 0,
+                        Students: studentsRes.count ?? 0,
+                    }
+                });
+            } catch (err) {
+                console.error('Supabase count error', err);
+            } finally {
+                setLoading(false);
+            }
         };
 
         loadCounts();
@@ -225,51 +215,51 @@ function RecentActivity() {
                 </h1>
                 <p className="italic text-gray-500 ml-8 -mt-5 mb-5 text-sm">Data are static only</p>
                 <div>
-                    <table class="text-sm w-full border border-gray-100 overflow-hidden">
-                        <thead class="bg-[#18181b]">
+                    <table className="text-sm w-full border border-gray-100 overflow-hidden">
+                        <thead className="bg-[#18181b]">
                             <tr>
-                                <th class="text-left px-4 py-3 w-2/3 font-semibold text-gray-200">
+                                <th className="text-left px-4 py-3 w-2/3 font-semibold text-gray-200">
                                     Activity
                                 </th>
-                                <th class="text-left px-4 py-3 w-1/3 font-semibold text-gray-200">
+                                <th className="text-left px-4 py-3 w-1/3 font-semibold text-gray-200">
                                     Date
                                 </th>
                             </tr>
                         </thead>
 
-                    <tbody class="divide-y divide-gray-200">
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3">Added student 2025-2002</td>
-                            <td class="px-4 py-3">Nov. 15, 2025</td>
+                    <tbody className="divide-y divide-gray-200">
+                        <tr className="hover:bg-gray-50">
+                            <td className="px-4 py-3">Added student 2025-2002</td>
+                            <td className="px-4 py-3">Nov. 15, 2025</td>
                         </tr>
 
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3">Added student 2023-2022</td>
-                            <td class="px-4 py-3">Nov. 14, 2025</td>
+                        <tr className="hover:bg-gray-50">
+                            <td className="px-4 py-3">Added student 2023-2022</td>
+                            <td className="px-4 py-3">Nov. 14, 2025</td>
                         </tr>
 
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3">Added program BSIT</td>
-                            <td class="px-4 py-3">Nov. 14, 2025</td>
+                        <tr className="hover:bg-gray-50">
+                            <td className="px-4 py-3">Added program BSIT</td>
+                            <td className="px-4 py-3">Nov. 14, 2025</td>
                         </tr>
 
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3">Added student 2022-0427</td>
-                            <td class="px-4 py-3">Nov. 13, 2025</td>
+                        <tr className="hover:bg-gray-50">
+                            <td className="px-4 py-3">Added student 2022-0427</td>
+                            <td className="px-4 py-3">Nov. 13, 2025</td>
                         </tr>
 
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3">Added program BSECe</td>
-                            <td class="px-4 py-3">Nov. 13, 2025</td>
+                        <tr className="hover:bg-gray-50">
+                            <td className="px-4 py-3">Added program BSECe</td>
+                            <td className="px-4 py-3">Nov. 13, 2025</td>
                         </tr>
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3">Added student 2025-2002</td>
-                            <td class="px-4 py-3">Nov. 12, 2025</td>
+                        <tr className="hover:bg-gray-50">
+                            <td className="px-4 py-3">Added student 2025-2002</td>
+                            <td className="px-4 py-3">Nov. 12, 2025</td>
                         </tr>
 
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3">Added college collegecode1</td>
-                            <td class="px-4 py-3">Nov. 11, 2025</td>
+                        <tr className="hover:bg-gray-50">
+                            <td className="px-4 py-3">Added college collegecode1</td>
+                            <td className="px-4 py-3">Nov. 11, 2025</td>
                         </tr>
                     </tbody>
                     </table>

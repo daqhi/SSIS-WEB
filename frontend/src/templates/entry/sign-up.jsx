@@ -3,92 +3,48 @@ import { useNavigate } from "react-router-dom";
 import { CircleUser, Lock, Mail } from 'lucide-react';
 import "../../static/css/entry.css";
 import supabase from "../../lib/supabaseClient";
+import bcrypt from 'bcryptjs';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function SignUp() {
+    const navigate = useNavigate();
     const [username, setUsername] = useState("");
     const [userEmail, setUserEmail] = useState("");
     const [password, setPassword] = useState("");
-    
     const [isLoading, setIsLoading] = useState(false);
-    const navigate = useNavigate();
     const [show, setShow] = useState(false);
 
     useEffect(() => { setShow(true) }, []);
 
-    // Send an email using Mailtrap API (Option 1: Direct API call)
-    async function sendWelcomeEmail(toEmail, username) {
+    // Send email through Flask backend
+    async function sendWelcomeEmail(email, username) {
         try {
-            const response = await fetch('https://send.api.mailtrap.io/api/send', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer YOUR_MAILTRAP_API_TOKEN', // Replace with your actual token
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    from: {
-                        email: "hello@demomailtrap.com",
-                        name: "SSIS Web App"
-                    },
-                    to: [
-                        {
-                            email: toEmail,
-                            name: username
-                        }
-                    ],
-                    subject: "Welcome to SSIS Web App!",
-                    text: `Hello ${username}!\n\nWelcome to SSIS Web App! Your account has been created successfully.\n\nBest regards,\nSSIS Team`,
-                    html: `
-                        <h2>Welcome to SSIS Web App!</h2>
-                        <p>Hello <strong>${username}</strong>!</p>
-                        <p>Your account has been created successfully. You can now access the dashboard and manage your academic data.</p>
-                        <p>Best regards,<br>SSIS Team</p>
-                    `
-                })
+            console.log("Sending email to:", email);
+            const response = await fetch("http://localhost:5000/api/send-welcome-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    email: email
+                }),
             });
 
-            if (response.ok) {
-                console.log('Welcome email sent successfully');
-                return true;
-            } else {
-                console.error('Failed to send welcome email:', response.statusText);
-                return false;
-            }
-        } catch (error) {
-            console.error('Error sending welcome email:', error);
-            return false;
-        }
-    }
-
-    // Alternative: Send email through your Flask backend (Option 2: Recommended)
-    async function sendWelcomeEmailViaBackend(toEmail, username) {
-        try {
-            const response = await fetch(`${API}/api/send-welcome-email`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    to_email: toEmail,
-                    username: username
-                })
-            });
-
-            const result = await response.json();
+            console.log("Response status:", response.status);
+            const data = await response.json();
+            console.log("Response data:", data);
             
-            if (response.ok) {
-                console.log('Welcome email sent via backend');
-                return true;
-            } else {
-                console.error('Backend email error:', result.error);
-                return false;
+            if (!response.ok) {
+                throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
             }
+            
+            console.log("Email sent successfully:", data.message);
+            return true;
         } catch (error) {
-            console.error('Error sending email via backend:', error);
+            console.error("Error sending welcome email:", error);
             return false;
         }
     }
+
 
     // Supabase database registration (insert into your custom tables)
     async function handleSupabaseSignUp(e) {
@@ -103,14 +59,18 @@ export default function SignUp() {
         }
 
         try {
-            // Option 1: Insert into a 'users' table (if you have one)
+            // Hash password
+            const salt = bcrypt.genSaltSync(10);
+            const hashedPassword = bcrypt.hashSync(password, salt);
+
+            // Insert into a 'users' table (if you have one)
             const { data: userData, error: userError } = await supabase
                 .from('users')
                 .insert([
                     {
                         username: username,
                         useremail: userEmail,
-                        userpass: password, // Note: In production, hash this password!
+                        userpass: hashedPassword, 
                         created_on: new Date().toISOString()
                     }
                 ])
@@ -125,6 +85,9 @@ export default function SignUp() {
 
             console.log("User created in database:", userData);
             
+            // Store the newly created userid
+            const newUserId = userData[0].userid;
+            
             // Send welcome email after successful registration
             const emailSent = await sendWelcomeEmail(userEmail, username);
             if (emailSent) {
@@ -133,11 +96,13 @@ export default function SignUp() {
                 alert("Account created successfully! (Note: Welcome email could not be sent)");
             }
             
-            // Store user info locally (optional)
+            // Store user info locally including userid
             localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("userid", newUserId);
             localStorage.setItem("username", username);
+            localStorage.setItem("useremail", userEmail);
             
-            navigate("/dashboard");
+            navigate("/sign-in");
 
         } catch (err) {
             console.error("Error during database signup:", err);

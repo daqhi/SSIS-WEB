@@ -5,6 +5,16 @@ import os
 load_dotenv()
 
 
+SupabaseConfig = {
+    "host": "db.dynnqdaabhcmfnomebqk.supabase.co",
+    "port": 5432,
+    "dbname": "web-ssis",
+    "user": "postgres",
+    "password": "eliabado123",
+    "sslmode": "require"      
+}
+
+
 DB_CONFIG = {
     "host": os.getenv("DATABASE_HOST"),
     "port": int(os.getenv("DATABASE_PORT", 5432)),  
@@ -13,10 +23,6 @@ DB_CONFIG = {
     "password": os.getenv("DATABASE_PASSWORD")
 }
 
-
-class SupabaseConfig:
-    URL = os.getenv("SUPABASE_URL")
-    KEY = os.getenv("SUPABASE_KEY")
 
 
 class Config:
