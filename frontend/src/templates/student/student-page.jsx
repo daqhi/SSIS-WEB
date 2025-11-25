@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { getCurrentUserId } from "../../lib/auth";
+import { uploadToCloudinary } from '../../lib/cloudinary';
+import { set } from '@cloudinary/url-gen/actions/variable';
 import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSquareCaretRight, faArrowLeft, faArrowRight, faUser } from "@fortawesome/free-solid-svg-icons";
 import '../../static/css/pages.css'
 import Navbar from "../components/navbar"
+import Footer from "../components/footer"
 import supabase from "../../lib/supabaseClient";
-import { getCurrentUserId } from "../../lib/auth";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
@@ -20,6 +23,7 @@ export default function StudentPage() {
     const toggleForm = () => {
         setShowForm(!showForm)
         setShowStudentDetails(false)
+        setEditingStudent(null)
     }
 
     useEffect(() => {
@@ -34,7 +38,7 @@ export default function StudentPage() {
     return (
         <div>
             <Navbar />
-            <div className='directory-content'>
+            <div className='flex flex-row h-screen w-full overflow-y-auto'>
                 <div className="directory-wrapper">
                     <div className="breadcrumb-container">
                         <nav className="breadcrumb">
@@ -60,8 +64,15 @@ export default function StudentPage() {
                         }}
                         onToggleStudentDetails={(student) => {
                             setShowForm(false);
-                            setSelectedStudent(student);
-                            setShowStudentDetails(!showStudentDetails);
+                            // Check if clicking on the same student - if so, toggle off
+                            if (selectedStudent?.idnum === student.idnum && showStudentDetails) {
+                                setShowStudentDetails(false);
+                                setSelectedStudent(null);
+                            } else {
+                                // Different student or details not showing - show details
+                                setSelectedStudent(student);
+                                setShowStudentDetails(true);
+                            }
                         }}
                     />
                 </div>
@@ -78,11 +89,14 @@ export default function StudentPage() {
                             editingStudent={editingStudent}
                         />
                     ) : showStudentDetails ? (
-                        <div className="h-full w-full bg-gray-100 p-10">
+                        <div className="h-screen w-full bg-gray-100 p-10 overflow-y-auto">
                             <img 
-                                src="src/static/images/default.jpg" 
+                                src={selectedStudent?.studentprofile || "src/static/images/default.jpg"} 
                                 alt="Student" 
                                 className="w-40 h-40 object-cover rounded-full mx-auto"
+                                onError={(e) => {
+                                    e.target.src = "src/static/images/default.jpg";
+                                }}
                             />
                             
                             <h1 className='mt-6 mb-2 font-semibold text-base'>Personal Details</h1>
@@ -120,6 +134,7 @@ export default function StudentPage() {
                     ) : null}
                 </div>
             </div>
+            <Footer />
         </div>
     )
 }
@@ -127,16 +142,15 @@ export default function StudentPage() {
 
 
 function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
+    const [photoFile, setPhotoFile] = useState(null);
     const [idNum, setIdNum] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [sex, setSex ] = useState("");
     const [yearLevel, setYearLevel ] = useState("");
     const [program, setProgram] = useState(""); //for drop down
-
     const [programs, setPrograms] = useState([])
-
-
+    
 
     useEffect(() => {
         if (editingStudent) {
@@ -192,10 +206,20 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
     async function handleSubmit(e) {
         e.preventDefault();
 
-        if (
-            !idNum || !firstName || !lastName ||
-            !sex || !yearLevel || !program
-        ) {
+        let studentprofile = null;
+
+        if(photoFile) {
+            try {
+                studentprofile = await uploadToCloudinary(photoFile);
+                console.log('Photo uploaded to Cloudinary:', studentprofile);
+            } catch (error) {
+                console.error('Error uploading photo:', error);
+                alert('Failed to upload photo. Please try again.');
+                return;
+            }
+        }
+
+        if (!idNum || !firstName || !lastName || !sex || !yearLevel || !program) {
             alert("All fields are required!");
             return;
         }
@@ -206,6 +230,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
         }
 
         const payload = {
+            studentprofile: studentprofile,
             idnum: idNum,
             firstname: firstName,
             lastname: lastName,
@@ -229,6 +254,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                 const { error } = await supabase
                     .from('students')
                     .update({
+                        studentprofile: photoFile,
                         firstname: firstName,
                         lastname: lastName,
                         sex: sex,
@@ -261,6 +287,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             }
 
             // clear form
+            setPhotoFile(null);
             setIdNum("");
             setFirstName("");
             setLastName("");
@@ -274,37 +301,19 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
     }
 
     return (
-        <div className='bg-gray-100 form-container p-10 pb-5'>
-            <h1 className='font-bold text-4xl mb-5 pt-10'>Student Form</h1>
+        <div className='h-screen w-full bg-gray-100 px-10 pt-10 overflow-y-auto'>
+            <h1 className='font-bold text-4xl mb-5 '>Student Form</h1>
             <hr />
             <div className='mt-5'>
                 <form onSubmit={handleSubmit}>
                     <label className="font-semibold text-base">Upload Photo: </label> <br />
-                    <div className="flex items-center">
-                        {/* Hidden File Input */}
-                        <input
-                            id="idNumInput"
-                            type="file"
-                            onChange={(e) => setIdNum(e.target.files[0])}
-                            disabled={!!editingStudent}
-                            className="hidden"
-                        />
-
-                        {/* Custom Button */}
-                        <label
-                        htmlFor="idNumInput"
-                        className={`py-1 px-3 cursor-pointer text-white text-sm
-                            ${editingStudent ? "bg-gray-400 cursor-not-allowed" : "w-40 border-1 border-[#18181b] bg-[#18181b] hover:bg-[#FCA311] hover:border-[#FCA311]"}
-                        `}
-                        >
-                        Choose File
-                        </label>
-
-                        {/* Show selected filename */}
-                        <span className="text-sm text-gray-700 w-full border-1 border-gray-300 bg-white py-1 px-3">
-                        {idNum ? idNum.name : "No file selected"}
-                        </span>
-                    </div> <br />
+                    <input 
+                    type='file'
+                    accept='image/*'
+                    onChange={(e) => setPhotoFile(e.target.files[0])}
+                    disabled={!!editingStudent}
+                    className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
+                    /> <br />
                     
                     <label className="font-semibold text-base">ID Number: </label> <br />
                     <input
@@ -377,7 +386,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
 
 
                     <div className='add-button-container'>
-                        <button type="submit" className='bg-[#FCA311] w-full w-full h-10 text-white font-bold hover:bg-[#e5940e]'>
+                        <button type="submit" className='bg-[#FCA311] -mt-8 w-full w-full h-10 text-white font-bold hover:bg-[#e5940e]'>
                             Submit 
                         </button>
                     </div>
@@ -472,16 +481,52 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
     // for searching
     async function handleSearch(keyword) {
         if (!keyword.trim()) {
-            fetchStudents();
+            // Reload all students if search is empty
+            const userid = getCurrentUserId();
+            if (!userid) return;
+
+            const { data, error } = await supabase
+                .from("students")
+                .select("*")
+                .eq("userid", userid);
+            
+            if (error) {
+                console.error("Error fetching students:", error);
+                return;
+            }
+            setStudents(data || []);
             return;
         }
 
         try {
-            const res = await fetch(`${API}/api/search_student/${keyword}`);
-            if (!res.ok) throw new Error("Search failed");
+            const userid = getCurrentUserId();
+            if (!userid) return;
 
-            const data = await res.json();
-            setStudents(data);
+            // First fetch all students for the user
+            const { data, error } = await supabase
+                .from("students")
+                .select("*")
+                .eq("userid", userid);
+
+            if (error) {
+                console.error("Error searching students:", error);
+                return;
+            }
+
+            // Filter locally to handle "None" display for null values
+            const filtered = (data || []).filter((student) => {
+                const searchLower = keyword.toLowerCase();
+                return (
+                    student.idnum?.toLowerCase().includes(searchLower) ||
+                    student.firstname?.toLowerCase().includes(searchLower) ||
+                    student.lastname?.toLowerCase().includes(searchLower) ||
+                    student.sex?.toLowerCase().includes(searchLower) ||
+                    student.programcode?.toLowerCase().includes(searchLower) ||
+                    (!student.programcode && searchLower.includes('none'))
+                );
+            });
+
+            setStudents(filtered);
         } catch (err) {
             console.error("Error searching students:", err);
         }
@@ -662,13 +707,3 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
     );
 }
 
-
-
-
-function StudentDetails(){
-    return (
-        <div>
-
-        </div>
-    )
-}

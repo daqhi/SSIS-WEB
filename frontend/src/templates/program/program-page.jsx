@@ -140,14 +140,14 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
         }
 
         const payload = {
-            collegecode: collegeCode,
-            programcode: programCode,
-            programname: programName,
+            collegecode: collegeCode.trim(),
+            programcode: programCode.trim(),
+            programname: programName.trim(),
         };
 
         const userid = getCurrentUserId();
         if (!userid) {
-            alert("User not logged in.");
+            alert("You must be logged in to perform this action.");
             return;
         }
 
@@ -159,26 +159,26 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
             // ========================= UPDATE PROGRAM ========================= //
 
             if (editingProgram) {
-                // Update existing programs
                 const { error } = await supabase
                     .from('programs')
                     .update({
-                        collegecode: collegeCode,
-                        programname: programName,
+                        collegecode: payload.collegecode,
+                        programcode: payload.programcode,
+                        programname: payload.programname,
                     })
                     .eq('programcode', editingProgram.programcode)
-                    .eq('userid', getCurrentUserId());
+                    .eq('userid', userid);
 
                 if (error) {
-                    alert(error.message || "Failed to update college");
-                    setIsLoading(false);
+                    console.error("Error updating program:", error);
+                    alert(error.message || "Failed to update program");
                     return;
                 }
-
 
                 alert("Program updated successfully!");
                 onProgramUpdated?.();
             } else {
+
                 // ========================= ADD NEW PROGRAM ========================= //
                 const { error } = await supabase 
                     .from('programs')
@@ -201,7 +201,6 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
             console.error("Error submitting form:", err);
             alert("Something went wrong. Check console for details.");
         }
-        setIsLoading(false);
     }
 
 
@@ -396,15 +395,25 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
             const { data, error } = await supabase
                 .from("programs")
                 .select("*")
-                .eq("userid", userid)
-                .or(`programcode.ilike.%${keyword}%,programname.ilike.%${keyword}%,collegecode.ilike.%${keyword}%`);
+                .eq("userid", userid);
 
             if (error) {
                 console.error("Error searching programs:", error);
                 return;
             }
 
-            setPrograms(data || []);
+            //filter locally
+            const filtered = (data || []).filter((program) => {
+                const serachLower = keyword.toLowerCase();
+                return (
+                    (program.collegecode && program.collegecode.toLowerCase().includes(serachLower)) ||
+                    (program.programcode && program.programcode.toLowerCase().includes(serachLower)) ||
+                    (program.programname && program.programname.toLowerCase().includes(serachLower)) ||
+                    (!program.collegecode && "none".includes(serachLower))
+                )
+            });
+
+            setPrograms(filtered);
         } catch (err) {
             console.error("Error searching programs:", err);
         }

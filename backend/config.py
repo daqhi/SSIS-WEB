@@ -1,5 +1,7 @@
 from dotenv import load_dotenv
 import os
+import cloudinary
+import cloudinary.uploader
 
 
 load_dotenv()
@@ -15,14 +17,11 @@ SupabaseConfig = {
 }
 
 
-DB_CONFIG = {
-    "host": os.getenv("DATABASE_HOST"),
-    "port": int(os.getenv("DATABASE_PORT", 5432)),  
-    "database": os.getenv("DATABASE_NAME"),
-    "user": os.getenv("DATABASE_USER"),
-    "password": os.getenv("DATABASE_PASSWORD")
-}
-
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET")
+)
 
 
 class Config:
@@ -32,3 +31,12 @@ class Config:
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
     MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", 'True') == 'True' # True by default
     MAIL_USE_SSL = os.getenv("MAIL_USE_SSL", 'False') == 'True' # False by default
+
+
+DB_CONFIG = {
+    "host": os.getenv("DATABASE_HOST"),
+    "port": int(os.getenv("DATABASE_PORT", 5432)),  
+    "database": os.getenv("DATABASE_NAME"),
+    "user": os.getenv("DATABASE_USER"),
+    "password": os.getenv("DATABASE_PASSWORD")
+}

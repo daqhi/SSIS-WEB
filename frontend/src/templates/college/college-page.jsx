@@ -129,8 +129,9 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
             // ========================= UPDATE COLLEGE ========================= //
             if (editingCollege) {
                 const { error } = await supabase
-                    .from("colleges")
+                    .from('colleges')
                     .update({
+                        collegecode: payload.collegecode,
                         collegename: payload.collegename,
                     })
                     .eq("collegecode", editingCollege.collegecode)
@@ -145,11 +146,11 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
                 alert("College updated successfully!");
                 onCollegeUpdated?.();
 
-            } 
+            } else {
+
             // ========================= ADD NEW COLLEGE ========================= //
-            else {
-                const { error } = await supabase 
-                .from ("colleges")
+            const { error } = await supabase 
+                .from('colleges')
                 .insert([payload]);
 
                 if (error) {

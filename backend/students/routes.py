@@ -23,6 +23,7 @@ def get_db_connection():
 def add_student():
     data = request.get_json()
 
+    profile = data.get("profile")
     idnum = data.get("idnum")
     firstname = data.get("firstname")
     lastname = data.get("lastname")
@@ -37,9 +38,9 @@ def add_student():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO students (idnum, firstname, lastname, sex, yearlevel, programcode)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (idnum, firstname, lastname, sex, yearlevel, programcode))
+            INSERT INTO students (profile, idnum, firstname, lastname, sex, yearlevel, programcode)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (profile, idnum, firstname, lastname, sex, yearlevel, programcode))
         conn.commit()
         cur.close()
         conn.close()
@@ -79,6 +80,7 @@ def get_students():
 def update_student(idnum):
     try:
         data = request.get_json()
+        new_profile = data.get("profile")
         new_idnum = data.get('idnum')
         new_firstname = data.get("firstname")
         new_lastname = data.get("lastname")
@@ -95,10 +97,10 @@ def update_student(idnum):
         # Update the record
         cur.execute("""
             UPDATE students
-            SET idnum = %s, firstname = %s, lastname = %s, sex = %s, yearlevel = %s, programcode = %s
+            SET profile = %s, idnum = %s, firstname = %s, lastname = %s, sex = %s, yearlevel = %s, programcode = %s
             WHERE idnum = %s
             RETURNING idnum;
-        """, (new_idnum, new_firstname, new_lastname,new_sex ,new_yearlevel, new_programcode, idnum))
+        """, (new_profile, new_idnum, new_firstname, new_lastname,new_sex ,new_yearlevel, new_programcode, idnum))
 
         updated = cur.fetchone()
         conn.commit()
@@ -148,7 +150,8 @@ def search_student(keyword):
         # Use COALESCE so that NULL fields don't break the ILIKE comparison
         query = """
             SELECT * FROM students
-            WHERE COALESCE(idnum, '') ILIKE %s
+            WHERE COALESCE(profile, '') ILIKE %s
+               OR COALESCE(idnum, '') ILIKE %s
                OR COALESCE(firstname, '') ILIKE %s
                OR COALESCE(lastname, '') ILIKE %s
                OR COALESCE(sex, '') ILIKE %s
