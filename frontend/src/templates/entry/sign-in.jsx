@@ -70,7 +70,7 @@ export default function SignIn() {
             localStorage.setItem("username", user.username);
             localStorage.setItem("useremail", user.useremail);
 
-            alert(`Welcome back, ${user.username}!`);
+            // alert(`Welcome back, ${user.username}!`);
             navigate("/dashboard");
 
         } catch (err) {

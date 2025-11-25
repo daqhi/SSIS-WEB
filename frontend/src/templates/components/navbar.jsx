@@ -94,7 +94,7 @@ function Navbar() {
                                 <p>{userEmail}</p>
                             </div>
                             <img
-                                src="/src/static/icons/default.jpg"
+                                src="/src/static/images/default.jpg"
                                 alt="Profile"
                                 className="profile-pic"
                             />

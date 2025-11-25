@@ -1,9 +1,14 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import React, { useEffect, useState } from "react";
+import { Cloudinary } from '@cloudinary/url-gen';
+import { auto } from '@cloudinary/url-gen/actions/resize';
+import { autoGravity } from '@cloudinary/url-gen/qualifiers/gravity';
+import { AdvancedImage } from '@cloudinary/react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuildingColumns, faChartLine, faBook, 
          faGraduationCap, faEllipsis, faFolderOpen,
-         faClockRotateLeft, faSort } from "@fortawesome/free-solid-svg-icons";
+         faClockRotateLeft, faPenClip, 
+         faPen, faPlus} from "@fortawesome/free-solid-svg-icons";
 import Navbar from '/src/templates/components/navbar.jsx'
 import '../../static/css/dashboard.css'
 import GradientText from '../components/shiny-text.jsx';
@@ -12,7 +17,9 @@ import Footer from '../components/footer.jsx';
 import supabase from "../../lib/supabaseClient.js";
 import { getCurrentUserId } from "../../lib/auth.js";
 
-function Dashboard() {
+
+export default function Dashboard() {
+
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [counts, setCounts] = useState({ overall: { Colleges: '...', Programs: '...', Students: '...' } });
@@ -82,7 +89,7 @@ function Dashboard() {
             <Navbar />
             <div className="mx-20 my-7">
                 {/* HEADER */}
-                <div className='p-8 bg-gradient-to-r from-[#18181b] via-[#18181b] to-[#1e2b38] flex flex-col mx-5'>
+                <div className='leading-none p-8 pt-10 bg-gradient-to-r from-[#18181b] via-[#18181b] to-[#1e2b38] flex flex-col mx-5'>
                     <div>
                         <GradientText
                             colors={["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"]}
@@ -93,7 +100,7 @@ function Dashboard() {
                         </GradientText>
                     </div>
                     <div>
-                        <h3 className="mx-3 text-gray-200 pb-4">Manage, track, and simplify your academic data in one place.  </h3>
+                        <h3 className="mx-3 mt-5 text-gray-200 pb-4 leading-none">Manage, track, and simplify your academic data in one place.  </h3>
                     </div>
                 </div>
 
@@ -152,6 +159,8 @@ function Dashboard() {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* FORMS AND DIRECTORIES */}
                             <div className='border-1 border-gray-400 px-6 pt-5 pb-4 '>
                                 <h1 className='text-base font-bold mb-5'>
                                     <FontAwesomeIcon icon={faFolderOpen} style={{paddingRight:"10px"}}/>
@@ -196,7 +205,10 @@ function Dashboard() {
                                 </div>
                             </div>
                         </div>
-                        <RecentActivity />
+                        <div className="flex flex-col w-1/3 gap-5">
+                            <QuickActionsCard />
+                            <RecentActivity />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -205,9 +217,10 @@ function Dashboard() {
     )
 }
 
+
 function RecentActivity() {
     return (
-        <div className='border-1 border-gray-400  w-1/3 p-6 mr-5'>
+        <div className='border-1 border-gray-400 p-6 mr-5'>
             <div className="">
                 <h1 className='text-base font-bold mb-5'>
                     <FontAwesomeIcon icon={faClockRotateLeft} style={{paddingRight:"10px"}}/>
@@ -252,22 +265,59 @@ function RecentActivity() {
                             <td className="px-4 py-3">Added program BSECe</td>
                             <td className="px-4 py-3">Nov. 13, 2025</td>
                         </tr>
-                        <tr className="hover:bg-gray-50">
-                            <td className="px-4 py-3">Added student 2025-2002</td>
-                            <td className="px-4 py-3">Nov. 12, 2025</td>
-                        </tr>
-
-                        <tr className="hover:bg-gray-50">
-                            <td className="px-4 py-3">Added college collegecode1</td>
-                            <td className="px-4 py-3">Nov. 11, 2025</td>
-                        </tr>
                     </tbody>
                     </table>
-
                 </div>
             </div>
         </div>
     )
 }
 
-export default Dashboard;
+
+function QuickActionsCard(){
+    const navigate = useNavigate();
+    const [openMenu, setOpenMenu] = useState(null);
+
+    const toggleMenu = (menu) => {
+        setOpenMenu(openMenu === menu ? null : menu);
+    };
+
+    // for handling navigation + close dropdown
+    const handleNavigate = (path, options = {}) => {
+        navigate(path, options);
+        setOpenMenu(null);
+    };
+    return (
+        <div className='border-1 border-gray-400 p-6 mr-5'>
+            <div className="">
+                <h1 className='text-base font-bold mb-5'>
+                    Quick Actions
+                </h1>
+            </div>
+
+            <div className="flex flex-row flex-wrap gap-2 justify-between">
+                <button
+                    className="flex-1 leading-none max-w-30 text-start font-semibold bg-gray-100 text-black h-15 text-sm hover:bg-[#18181b] hover:text-gray-100 py-2 px-4 w-full flex flex-row items-center trasition-all duration-200 ease-in-out"
+                    onClick={() => handleNavigate("/college-page", { state: { openForm: true } })}
+                >
+                    <FontAwesomeIcon icon={faPlus} style={{paddingRight:"10px", color:"#FCA311"}}/>
+                    <p>Add college</p>
+                </button>
+                <button
+                    className="flex-1 leading-none max-w-30 text-start font-semibold bg-gray-100 text-black h-15 text-sm hover:bg-[#18181b] hover:text-gray-100 py-2 px-4 w-full flex flex-row items-center trasition-all duration-200 ease-in-out"
+                    onClick={() => handleNavigate("/program-page", { state: { openForm: true } })}
+                >
+                    <FontAwesomeIcon icon={faPlus} style={{paddingRight:"10px", color:"#FCA311"}}/>
+                    Add program
+                </button>
+                <button
+                    className="flex-1 leading-none max-w-30 text-start font-semibold bg-gray-100 text-black h-15 text-sm hover:bg-[#18181b] hover:text-gray-100 py-2 px-4 w-full flex flex-row items-center trasition-all duration-200 ease-in-out"
+                    onClick={() => handleNavigate("/student-page", { state: { openForm: true } })}
+                >
+                    <FontAwesomeIcon icon={faPlus} style={{paddingRight:"10px", color:"#FCA311"}}/>
+                    Add students
+                </button>
+            </div>
+        </div>
+    )
+}

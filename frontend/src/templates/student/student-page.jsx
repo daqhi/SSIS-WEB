@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSquareCaretRight, faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSquareCaretRight, faArrowLeft, faArrowRight, faUser } from "@fortawesome/free-solid-svg-icons";
 import '../../static/css/pages.css'
 import Navbar from "../components/navbar"
+import supabase from "../../lib/supabaseClient";
+import { getCurrentUserId } from "../../lib/auth";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
@@ -11,11 +13,14 @@ export default function StudentPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const [editingStudent, setEditingStudent] = useState(null);
-
+    const [selectedStudent, setSelectedStudent] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0)
-
     const [showForm, setShowForm] = useState(false)
-    const toggleForm = () => setShowForm(!showForm)
+    const [showStudentDetails, setShowStudentDetails] = useState(false)
+    const toggleForm = () => {
+        setShowForm(!showForm)
+        setShowStudentDetails(false)
+    }
 
     useEffect(() => {
         if (location.state?.openForm) {
@@ -51,20 +56,68 @@ export default function StudentPage() {
                         onEditStudent={(student) => {
                             setEditingStudent(student);
                             setShowForm(true);
+                            setShowStudentDetails(false);
+                        }}
+                        onToggleStudentDetails={(student) => {
+                            setShowForm(false);
+                            setSelectedStudent(student);
+                            setShowStudentDetails(!showStudentDetails);
                         }}
                     />
                 </div>
 
-                <div className={`form-wrapper ${showForm ? "open" : ""}`}>
+                <div className={`form-wrapper ${showForm || showStudentDetails ? "open" : ""}`}>
+                    {showForm ? (
                         <StudentForm
-                        onStudentAdded={() => setRefreshKey((prev) => prev + 1)}
+                            onStudentAdded={() => setRefreshKey((prev) => prev + 1)}
                             onStudentUpdated={() => {
                                 setRefreshKey((prev) => prev + 1);
                                 setEditingStudent(null);
                                 setShowForm(false);
                             }}
-                        editingStudent={editingStudent}
-                    />
+                            editingStudent={editingStudent}
+                        />
+                    ) : showStudentDetails ? (
+                        <div className="h-full w-full bg-gray-100 p-10">
+                            <img 
+                                src="src/static/images/default.jpg" 
+                                alt="Student" 
+                                className="w-40 h-40 object-cover rounded-full mx-auto"
+                            />
+                            
+                            <h1 className='mt-6 mb-2 font-semibold text-base'>Personal Details</h1>
+                            <div className="flex flex-row text-sm gap-5">
+                                <div>
+                                    <h1>ID Number: </h1>
+                                    <h1>First Name: </h1>
+                                    <h1>Last Name: </h1>
+                                    <h1>Sex: </h1>
+                                    <h1>Year Level:</h1>
+                                    <h1>College:</h1>
+                                    <h1>Program:</h1>
+                                </div>
+                                {/* area to populate */}
+                                <div>
+                                    <h1>{selectedStudent?.idnum || 'N/A'}</h1>
+                                    <h1>{selectedStudent?.firstname || 'N/A'}</h1>
+                                    <h1>{selectedStudent?.lastname || 'N/A'}</h1>
+                                    <h1>{selectedStudent?.sex || 'N/A'}</h1>
+                                    <h1>{selectedStudent?.yearlevel || 'N/A'}</h1>
+                                    <h1>{selectedStudent?.collegecode || 'N/A'}</h1>
+                                    <h1>{selectedStudent?.programcode || 'N/A'}</h1>
+                                </div>
+                            </div>  
+
+                            <h1 className='mt-6 mb-2 font-semibold text-base'>History</h1>
+                            <div className="flex flex-row text-sm">
+                                <div>
+                                    <h1>Added on (date)</h1>
+                                    <h1>Updated on (date)</h1>
+                                    <h1>Updated on (date)</h1>
+                                </div>
+                            </div> 
+                        </div>
+                    ) : null}
                 </div>
             </div>
         </div>
@@ -103,14 +156,35 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
         }
     }, [editingStudent])
 
+    // for populating program dropdown
     useEffect(() => {
-        fetch(`${API}/api/program_list`)
-            .then((res) => res.json())
-            .then((data) => {
+        const loadPrograms = async () => {
+            try {
+                const userid = getCurrentUserId();
+                
+                if (!userid) {
+                    console.error('No userid found - user may not be logged in');
+                    return;
+                }
+
+                const { data, error } = await supabase
+                    .from('programs')
+                    .select('*')
+                    .eq('userid', userid);
+
+                if (error) {
+                    console.error('Error fetching programs:', error);
+                    return;
+                }
+
                 console.log("Fetched programs:", data);
-                setPrograms(data);
-            })
-            .catch((err) => console.error("Error fetching programs:", err));
+                setPrograms(data || []);
+            } catch (err) {
+                console.error("Error fetching programs:", err);
+            }
+        };
+
+        loadPrograms();
     }, []);
 
 
@@ -140,30 +214,51 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             programcode: program === "None" ? null : program,
         };
 
+        const userid = getCurrentUserId();
+        if (!userid) {
+            alert('You must be logged in to add/edit students.');
+            return;
+        }
+
+        // Add userid to payload
+        payload.userid = userid;
+
         try {
-            let res;
             if (editingStudent) {
-                res = await fetch(`${API}/api/students/${editingStudent.idnum}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
+                // Update existing student in Supabase
+                const { error } = await supabase
+                    .from('students')
+                    .update({
+                        firstname: firstName,
+                        lastname: lastName,
+                        sex: sex,
+                        yearlevel: yearLevel,
+                        programcode: program === "None" ? null : program
+                    })
+                    .eq('idnum', editingStudent.idnum)
+                    .eq('userid', userid);
+
+                if (error) {
+                    console.error('Error updating student:', error);
+                    throw new Error(error.message);
+                }
+
+                alert('Student updated successfully!');
+                onStudentUpdated?.();
             } else {
-                res = await fetch(`${API}/api/add_student`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
-            }
+                // Add new student to Supabase
+                const { error } = await supabase
+                    .from('students')
+                    .insert([payload]);
 
-            if (!res.ok) {
-                const errorText = await res.text();
-                console.error("Backend error:", errorText);
-                throw new Error(errorText || "Request failed");
-            }
+                if (error) {
+                    console.error('Error adding student:', error);
+                    throw new Error(error.message);
+                }
 
-            alert(editingStudent ? "Student updated successfully!" : "Student added successfully!");
-            editingStudent ? onStudentUpdated?.() : onStudentAdded?.();
+                alert('Student added successfully!');
+                onStudentAdded?.();
+            }
 
             // clear form
             setIdNum("");
@@ -174,7 +269,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             setProgram("");
         } catch (err) {
             console.error("Error submitting form:", err);
-            alert("Something went wrong. Check console for details.");
+            alert("Something went wrong: " + err.message);
         }
     }
 
@@ -184,6 +279,33 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             <hr />
             <div className='mt-5'>
                 <form onSubmit={handleSubmit}>
+                    <label className="font-semibold text-base">Upload Photo: </label> <br />
+                    <div className="flex items-center">
+                        {/* Hidden File Input */}
+                        <input
+                            id="idNumInput"
+                            type="file"
+                            onChange={(e) => setIdNum(e.target.files[0])}
+                            disabled={!!editingStudent}
+                            className="hidden"
+                        />
+
+                        {/* Custom Button */}
+                        <label
+                        htmlFor="idNumInput"
+                        className={`py-1 px-3 cursor-pointer text-white text-sm
+                            ${editingStudent ? "bg-gray-400 cursor-not-allowed" : "w-40 border-1 border-[#18181b] bg-[#18181b] hover:bg-[#FCA311] hover:border-[#FCA311]"}
+                        `}
+                        >
+                        Choose File
+                        </label>
+
+                        {/* Show selected filename */}
+                        <span className="text-sm text-gray-700 w-full border-1 border-gray-300 bg-white py-1 px-3">
+                        {idNum ? idNum.name : "No file selected"}
+                        </span>
+                    </div> <br />
+                    
                     <label className="font-semibold text-base">ID Number: </label> <br />
                     <input
                         type="text"
@@ -272,10 +394,9 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
 
 // ===================== STUDENT DIRECTORY ===================== //
 
-function StudentDirectory( {refreshKey, onEditStudent }) {
+function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails }) {
     const [students, setStudents] = useState([])
     const [sortOrder, setSortOrder] = useState("asc");
-
 
     //for pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -284,13 +405,87 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
     const indexOfFirst = indexOfLast - rowsPerPage;
     const currentStudents = students.slice(indexOfFirst, indexOfLast);
 
-    //for loading students
+    //for loading students SUPABASE
     useEffect(() => {
-        fetch("http://127.0.0.1:5000/api/student_list")
-            .then((res) => res.json())
-            .then((data) => setStudents(data))
-            .catch((err) => console.error(err))
+        const loadStudents = async () => {
+            try {
+                const userid = getCurrentUserId();
+                
+                if (!userid) {
+                    console.error('No userid found - user may not be logged in');
+                    return;
+                }
+
+                const { data, error } = await supabase
+                    .from('students')
+                    .select('*')
+                    .eq('userid', userid);
+
+                if (error) {
+                    console.error('Error fetching students:', error);
+                    return;
+                }
+
+                setStudents(data || []);
+            } catch (err) {
+                console.error('Unexpected error:', err);
+            }
+        };
+
+        loadStudents();
     }, [refreshKey])
+
+
+    //for deleting students
+    async function handleDelete(idNum) {
+        if (!window.confirm(`Are you sure you want to delete ${idNum}?`)) return;
+
+        try {
+            const userid = getCurrentUserId();
+            
+            if (!userid) {
+                console.error('No userid found - user may not be logged in');
+                return;
+            }
+
+            // Delete from Supabase
+            const { error } = await supabase
+                .from('students')
+                .delete()
+                .eq('idnum', idNum)
+                .eq('userid', userid);
+
+            if (error) {
+                console.error('Error deleting student:', error);
+                alert('Failed to delete student.');
+                return;
+            }
+
+            alert('Student deleted successfully!');
+            setStudents(students.filter((s) => s.idnum !== idNum));
+        } catch (err) {
+            console.error('Error deleting student:', err);
+            alert('An error occurred while deleting.');
+        }
+    }
+
+    // for searching
+    async function handleSearch(keyword) {
+        if (!keyword.trim()) {
+            fetchStudents();
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/api/search_student/${keyword}`);
+            if (!res.ok) throw new Error("Search failed");
+
+            const data = await res.json();
+            setStudents(data);
+        } catch (err) {
+            console.error("Error searching students:", err);
+        }
+    }
 
 
     function toggleSortIdNum() {
@@ -355,45 +550,6 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
 
         setStudents(sorted);
         setSortOrder(prev => prev === "asc" ? "desc" : "asc");
-    }
-
-
-    //for deleteiing students
-    async function handleDelete(idNum) {
-        if (!window.confirm(`Are you sure you want to delete ${idNum}?`)) return;
-
-        try {
-            const res = await fetch(`${API}/api/delete_student/${idNum}`, {
-                method: "DELETE",
-            });
-
-            if (res.ok) {
-                alert("Student deleted successfully!");
-                setStudents(students.filter((s) => s.idNum !== idNum));
-            } else {
-                alert("Failed to delete student.");
-            }
-        } catch (err) {
-            console.error("Error deleting student:", err);
-        }
-    }
-
-    // for searching
-    async function handleSearch(keyword) {
-        if (!keyword.trim()) {
-            fetchStudents();
-            return;
-        }
-
-        try {
-            const res = await fetch(`${API}/api/search_student/${keyword}`);
-            if (!res.ok) throw new Error("Search failed");
-
-            const data = await res.json();
-            setStudents(data);
-        } catch (err) {
-            console.error("Error searching students:", err);
-        }
     }
 
 
@@ -469,6 +625,10 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
                                         <button className='delete' onClick={() => handleDelete(s.idnum)}> 
                                             <FontAwesomeIcon icon={faTrash} size='xs' color='#FCA311'/> 
                                         </button>
+
+                                        <button className='edit ml-1' onClick={() => onToggleStudentDetails(s)}>
+                                            <FontAwesomeIcon icon={faUser} size='xs' color='#999999ff'/>
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -500,4 +660,15 @@ function StudentDirectory( {refreshKey, onEditStudent }) {
             </div>
         </div>
     );
+}
+
+
+
+
+function StudentDetails(){
+    return (
+        <div>
+
+        </div>
+    )
 }

@@ -4,6 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSquareCaretRight, faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import '../../static/css/pages.css'
 import Navbar from '../components/navbar';
+import { getCurrentUserId } from '../../lib/auth';
+import supabase from '../../lib/supabaseClient';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
@@ -11,12 +13,11 @@ export default function ProgramPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const [editingProgram, setEditingProgram] = useState(null);
-
-    const [refreshKey, setRefreshKey] = useState(0)
-
+    const [refreshKey, setRefreshKey] = useState(0);
     const [showForm, setShowForm] = useState(false)
     const toggleForm = () => setShowForm(!showForm)
 
+    // Open form if navigated with state
     useEffect(() => {
         if (location.state?.openForm) {
             setShowForm(true)
@@ -80,6 +81,7 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
     const [programName, setProgramName] = useState("");
     const [colleges, setColleges] = useState([]);
 
+    // Populate form if editing
     useEffect(() => {
         if (editingProgram) {
             setCollegeCode(editingProgram.collegecode);
@@ -92,11 +94,35 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
         }
     }, [editingProgram])
 
+    // fetch colleges for dropdown
     useEffect(() => {
-        fetch(`${API}/api/college_list`)
-            .then((res) => res.json())
-            .then((data) => setColleges(data))
-            .catch((err) => console.error("Error fetching colleges:", err));
+        const loadColleges = async () => {
+            try {
+                const userid = getCurrentUserId();
+
+                if (!userid) {
+                    console.error('No userid found - user may not be logged in');
+                    return;
+                }
+
+                const { data, error } = await supabase
+                    .from("colleges")
+                    .select("*")
+                    .eq("userid", userid);
+
+                if (error) {
+                    console.error("Error fetching colleges:", error);
+                    return;
+                }
+
+                console.log("Fetched colleges:", data);
+                setColleges(data || []);
+            } catch (error) {
+                console.error("Unexpected error:", error);
+            }
+        };
+
+        loadColleges();
     }, []);
 
     //handler to add program
@@ -119,29 +145,50 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
             programname: programName,
         };
 
+        const userid = getCurrentUserId();
+        if (!userid) {
+            alert("User not logged in.");
+            return;
+        }
+
+        payload.userid = userid;
+
         try {
             let res;
+            
+            // ========================= UPDATE PROGRAM ========================= //
 
             if (editingProgram) {
                 // Update existing programs
-                res = await fetch(`${API}/api/programs/${editingProgram.programcode}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
+                const { error } = await supabase
+                    .from('programs')
+                    .update({
+                        collegecode: collegeCode,
+                        programname: programName,
+                    })
+                    .eq('programcode', editingProgram.programcode)
+                    .eq('userid', getCurrentUserId());
 
-                if (!res.ok) throw new Error("Failed to update program");
+                if (error) {
+                    alert(error.message || "Failed to update college");
+                    setIsLoading(false);
+                    return;
+                }
+
+
                 alert("Program updated successfully!");
                 onProgramUpdated?.();
             } else {
-                // Add new college
-                res = await fetch(`${API}/api/add_program`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
+                // ========================= ADD NEW PROGRAM ========================= //
+                const { error } = await supabase 
+                    .from('programs')
+                    .insert([payload]);
 
-                if (!res.ok) throw new Error("Failed to add program");
+                    if(error) {
+                        alert(error.message || "Failed to add program");
+                        console.error("Error adding program:", error);
+                        return;
+                    }
                 alert("Program added successfully!");
                 onProgramAdded?.();
             }
@@ -154,7 +201,7 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
             console.error("Error submitting form:", err);
             alert("Something went wrong. Check console for details.");
         }
-
+        setIsLoading(false);
     }
 
 
@@ -219,7 +266,6 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
 function ProgramDirectory( {refreshKey, onEditProgram }) {
     const [programs, setPrograms] = useState([])
     const [sortOrder, setSortOrder] = useState("asc");
-
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
     const indexOfLast = currentPage * rowsPerPage;
@@ -228,10 +274,31 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
 
     //for loading programs
     useEffect(() => {
-        fetch("http://127.0.0.1:5000/api/program_list")
-            .then((res) => res.json())
-            .then((data) => setPrograms(data))
-            .catch((err) => console.error(err))
+        const loadPrograms = async () => {
+            try {
+                const userid = getCurrentUserId();
+
+                if (!userid) {
+                    console.error('No userid found - user may not be logged in');
+                    return;
+                }
+
+                const { data, error } = await supabase
+                    .from("programs")
+                    .select("*")
+                    .eq("userid", userid);
+                
+                if (error) {
+                    console.error("Error fetching programs:", error);
+                    return;
+                }
+                setPrograms(data || []);
+            } catch (error) {
+                console.error("Error loading programs:", error);
+            }
+        };
+        loadPrograms();
+
     }, [refreshKey])
 
 
@@ -275,18 +342,28 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
         if (!window.confirm(`Are you sure you want to delete ${programCode}?`)) return;
 
         try {
-            const res = await fetch(`${API}/api/delete_program/${programCode}`, {
-                method: "DELETE",
-            });
+            const userid = getCurrentUserId();
 
-            if (res.ok) {
+            if (!userid) {
+                console.error('No userid found - user may not be logged in');
+                return;
+            }
+
+            const { error } = await supabase
+                .from('programs')
+                .delete()
+                .eq('programcode', programCode)
+                .eq('userid', userid);
+            if (error) {
+                console.error("Error deleting program:", error);
+                return;
+            } else {
                 alert("Program deleted successfully!");
                 setPrograms(programs.filter((p) => p.programcode !== programCode));
-            } else {
-                alert("Failed to delete program.");
             }
         } catch (err) {
             console.error("Error deleting program:", err);
+            alert("An error occurred while deleting the program.");
         }
     }
 
@@ -294,16 +371,40 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
     // for searching
     async function handleSearch(keyword) {
         if (!keyword.trim()) {
-            fetchPrograms();
+            // Reload all programs if search is empty
+            const userid = getCurrentUserId();
+            if (!userid) return;
+
+            const { data, error } = await supabase
+                .from("programs")
+                .select("*")
+                .eq("userid", userid);
+            
+            if (error) {
+                console.error("Error fetching programs:", error);
+                return;
+            }
+            setPrograms(data || []);
             return;
         }
 
         try {
-            const res = await fetch(`${API}/api/search_program/${keyword}`);
-            if (!res.ok) throw new Error("Search failed");
+            const userid = getCurrentUserId();
+            if (!userid) return;
 
-            const data = await res.json();
-            setPrograms(data);
+            // Search in Supabase using ilike for case-insensitive search
+            const { data, error } = await supabase
+                .from("programs")
+                .select("*")
+                .eq("userid", userid)
+                .or(`programcode.ilike.%${keyword}%,programname.ilike.%${keyword}%,collegecode.ilike.%${keyword}%`);
+
+            if (error) {
+                console.error("Error searching programs:", error);
+                return;
+            }
+
+            setPrograms(data || []);
         } catch (err) {
             console.error("Error searching programs:", err);
         }

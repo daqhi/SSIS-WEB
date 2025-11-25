@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faSort, faPenToSquare, faTrash, faArrowLeft, faArrowRight, } from "@fortawesome/free-solid-svg-icons";
 import Navbar from "../components/navbar";
+import supabase from "../../lib/supabaseClient";
+import { getCurrentUser, getCurrentUserId } from "../../lib/auth";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -10,9 +12,7 @@ export default function CollegePage() {
     const navigate = useNavigate();
     const location = useLocation();
     const [editingCollege, setEditingCollege] = useState(null);
-
     const [refreshKey, setRefreshKey] = useState(0);
-
     const [showForm, setShowForm] = useState(false);
     const toggleForm = () => setShowForm(!showForm);
 
@@ -72,10 +72,12 @@ export default function CollegePage() {
 
 
 
-// COLLEGE FORM (Add or Edit)
+// ===================== COLLEGE FORM ===================== //
+
 function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
     const [collegeName, setCollegeName] = useState("");
     const [collegeCode, setCollegeCode] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     // Populate form fields if editing
     useEffect(() => {
@@ -91,57 +93,88 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
     // Add or Update handler
     async function handleSubmit(e) {
         e.preventDefault();
+        setIsLoading(true);
 
         if (!collegeName || !collegeCode) {
             alert("All fields are required!");
+            setIsLoading(false);
             return;
         }
 
         if (editingCollege) {
-            const confirmed = window.confirm("Are you sure you want to update college details?")
-            if (!confirmed) return; //cancel update
+            const confirmed = window.confirm("Are you sure you want to update college details?");
+            if (!confirmed) {
+                setIsLoading(false);
+                return;
+            }
         }
 
         const payload = {
-            collegecode: collegeCode,
-            collegename: collegeName,
+            collegecode: collegeCode.trim(),
+            collegename: collegeName.trim(),
         };
+
+        const userid = getCurrentUserId();
+        if (!userid) {
+            alert("You must be logged in to perform this action.");
+            setIsLoading(false);
+            return;
+        }
+
+        payload.userid = userid;
 
         try {
             let res;
 
+            // ========================= UPDATE COLLEGE ========================= //
             if (editingCollege) {
-                // Update existing college
-                res = await fetch(`${API}/api/colleges/${editingCollege.collegecode}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
+                const { error } = await supabase
+                    .from("colleges")
+                    .update({
+                        collegename: payload.collegename,
+                    })
+                    .eq("collegecode", editingCollege.collegecode)
+                    .eq('userid', userid);
 
-                if (!res.ok) throw new Error("Failed to update college");
+                if (error) {
+                    alert(error.message || "Failed to update college");
+                    setIsLoading(false);
+                    throw new Error(error.message);
+                }
+
                 alert("College updated successfully!");
                 onCollegeUpdated?.();
-            } else {
-                // Add new college
-                res = await fetch(`${API}/api/add_college`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
 
-                if (!res.ok) throw new Error("Failed to add college");
+            } 
+            // ========================= ADD NEW COLLEGE ========================= //
+            else {
+                const { error } = await supabase 
+                .from ("colleges")
+                .insert([payload]);
+
+                if (error) {
+                    alert(error.message || "Failed to add college");
+                    console.error("Supabase insert error:", error);
+                    setIsLoading(false);
+                    throw new Error(error.message);
+                }
+
                 alert("College added successfully!");
                 onCollegeAdded?.();
             }
 
-            // Reset form
+            // Clear form
             setCollegeCode("");
             setCollegeName("");
+
         } catch (err) {
             console.error("Error submitting form:", err);
-            alert("Something went wrong. Check console for details.");
+            alert("Something went wrong. Check console.");
         }
+
+        setIsLoading(false);
     }
+
 
     return (
         <div className="bg-gray-100 h-full p-10 shadow-md pb-68">
@@ -184,23 +217,47 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
     );
 }
 
-// DIRECTORY
+
+
+// ===================== COLLEGE DIRECTORY ===================== //
+
 function CollegeDirectory({ refreshKey, onEditCollege }) {
     const [colleges, setColleges] = useState([]);
     const [sortOrder, setSortOrder] = useState("asc");
-
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
     const indexOfLast = currentPage * rowsPerPage;
     const indexOfFirst = indexOfLast - rowsPerPage;
-    const currentColleges = colleges.slice(indexOfFirst, indexOfLast);
+    const currentColleges = Array.isArray(colleges) ? colleges.slice(indexOfFirst, indexOfLast) : [];
 
     // Load colleges
     useEffect(() => {
-        fetch(`${API}/api/college_list`)
-        .then((res) => res.json())
-        .then((data) => setColleges(data))
-        .catch((err) => console.error(err));
+        const loadColleges = async () => {
+            try {
+                const userid = getCurrentUserId();
+                
+                if (!userid) {
+                    console.error('No userid found - user may not be logged in');
+                    return;
+                }
+
+                const { data, error } = await supabase
+                    .from('colleges')
+                    .select('*')
+                    .eq('userid', userid);
+
+                if (error) {
+                    console.error('Error fetching colleges:', error);
+                    return;
+                }
+
+                setColleges(data || []);
+            } catch (err) {
+                console.error('Unexpected error:', err);
+            }
+        };
+
+        loadColleges();
     }, [refreshKey]);
 
     function toggleSortCollegeCode() {
@@ -231,18 +288,27 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
         if (!window.confirm(`Are you sure you want to delete ${collegeCode}?`)) return;
 
         try {
-            const res = await fetch(`${API}/api/delete_college/${collegeCode}`, {
-                method: "DELETE",
-            });
+            const userid = getCurrentUserId();
 
-            if (res.ok) {
+            if (!userid) {
+                alert("You must be logged in to perform this action.");
+                return;
+            }
+
+            const { error } = await supabase
+                .from("colleges")
+                .delete()
+                .eq("collegecode", collegeCode)
+                .eq('userid', userid);
+            if (error) {
+                alert("Failed to delete college.");
+            } else {
                 alert("College deleted successfully!");
                 setColleges(colleges.filter((c) => c.collegecode !== collegeCode));
-            } else {
-                alert("Failed to delete college.");
             }
         } catch (err) {
             console.error("Error deleting college:", err);
+            alert("An error occurred while deleting the college.");
         }
     }
 
@@ -250,17 +316,40 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
     // for searching
     async function handleSearch(keyword) {
         if (!keyword.trim()) {
-            // if input is empty, reload all colleges
-            fetchColleges();
+            // Reload all programs if search is empty
+            const userid = getCurrentUserId();
+            if (!userid) return;
+
+            const { data, error } = await supabase
+                .from("colleges")
+                .select("*")
+                .eq("userid", userid);
+            
+            if (error) {
+                console.error("Error fetching colleges:", error);
+                return;
+            }
+            setColleges(data || []);
             return;
         }
 
         try {
-            const res = await fetch(`${API}/api/search_college/${keyword}`);
-            if (!res.ok) throw new Error("Search failed");
+            const userid = getCurrentUserId();
+            if (!userid) return;
 
-            const data = await res.json();
-            setColleges(data);
+            // Search in Supabase using ilike for case-insensitive search
+            const { data, error } = await supabase
+                .from("colleges")
+                .select("*")
+                .eq("userid", userid)
+                .or(`collegecode.ilike.%${keyword}%,collegename.ilike.%${keyword}%`);
+
+            if (error) {
+                console.error("Error searching programs:", error);
+                return;
+            }
+
+            setColleges(data || []);
         } catch (err) {
             console.error("Error searching colleges:", err);
         }
@@ -297,12 +386,14 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                                     <FontAwesomeIcon icon={faSort} size="xs" color="#999" />
                                 </button>
                             </th>
-                            <th>Actions</th>
+                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1'> 
+                                    Actions <FontAwesomeIcon icon={faSort} size='xs' color='#f5f5f500'/> 
+                                </button>
                             </tr>
                         </thead>
                         <tbody>
                             {currentColleges.length > 0 ? (
-                                colleges.map((c) => (
+                                currentColleges.map((c) => (
                                 <tr key={c.collegecode}>
                                     <td>{c.collegecode}</td>
                                     <td>{c.collegename}</td>

@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from config import DB_CONFIG
+from config import SupabaseConfig
 
 colleges_bp = Blueprint("colleges_bp", __name__, url_prefix="/api")
 CORS(colleges_bp)
@@ -10,7 +10,7 @@ CORS(colleges_bp)
     
 def get_db_connection():
     try:
-        conn = psycopg2.connect(**DB_CONFIG)
+        conn = psycopg2.connect(**SupabaseConfig)
         print("Database connection successful")
         return conn
     except Exception as e:
@@ -28,12 +28,23 @@ def add_college():
         collegecode = data.get("collegecode")
         collegename = data.get("collegename")
 
+        # Validate input
         if not collegecode or not collegename:
             return jsonify({"error": "Missing required fields"}), 400
 
         conn = get_db_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
+        # Check if college code already exists
+        cur.execute("SELECT * FROM colleges WHERE collegecode = %s", (collegecode,))
+        existing = cur.fetchone()
+
+        if existing:
+            cur.close()
+            conn.close()
+            return jsonify({"error": "College code already exists"}), 409
+
+        # Insert new college
         cur.execute(
             """
             INSERT INTO colleges (collegecode, collegename)
@@ -43,17 +54,22 @@ def add_college():
             (collegecode, collegename)
         )
 
-        college_id = cur.fetchone()[0]
+        new_college_code = cur.fetchone()["collegecode"]
         conn.commit()
 
         cur.close()
         conn.close()
 
         print(f"College '{collegename}' added successfully!")
-        return jsonify({"message": "College registered successfully!", "collegecode": college_id}), 201
+        return jsonify({
+            "message": "College registered successfully!",
+            "collegecode": new_college_code
+        }), 201
 
     except Exception as e:
+        print(f"Error adding college: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 
 #============================ FOR LISTING ALL COLLEGES ============================#
