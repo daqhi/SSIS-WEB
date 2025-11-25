@@ -2,14 +2,14 @@ from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from config import DB_CONFIG
+from config import SupabaseConfig
 
 programs_bp = Blueprint("programs_bp", __name__, url_prefix="/api")
 CORS(programs_bp)
 
 def get_db_connection():
     try:
-        conn = psycopg2.connect(**DB_CONFIG)
+        conn = psycopg2.connect(**SupabaseConfig)
         print("Database connection successful")
         return conn
     except Exception as e:

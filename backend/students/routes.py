@@ -156,7 +156,8 @@ def search_student(keyword):
                OR COALESCE(lastname, '') ILIKE %s
                OR COALESCE(sex, '') ILIKE %s
                OR COALESCE(yearlevel::TEXT, '') ILIKE %s
-               OR COALESCE(programcode, '') ILIKE %s;
+               OR COALESCE(programcode, '') ILIKE %s
+               OR COALESCE(collegecode, '') ILIKE %s;
         """
 
         search_pattern = f"%{keyword}%"

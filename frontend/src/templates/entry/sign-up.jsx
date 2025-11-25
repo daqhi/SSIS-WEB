@@ -117,7 +117,7 @@ export default function SignUp() {
         <div>
             <div className={`main-container page ${show ? 'show' : ''}`}>
                 <div className="bg-gradient-to-br from-[#18181b] via-[#1e2b38] to-[#293B4D] flex justify-center items-center w-full h-full ">
-                    <div className="flex flex-row items-center h-150] rounded-2xl shadow-lg overflow-hidden bg-[#F8FFFF] py-10 pl-10">
+                    <div className="flex flex-row items-center w-200 h-140 rounded-2xl shadow-lg overflow-hidden bg-[#F8FFFF] py-10 pl-10">
                         <div className="bg-white border-1 border-[#8EE1EA] rounded-xl w-1/2 p-10">
                             <div className="mb-5">
                                 <h1 className="font-bold text-2xl">Sign Up</h1>

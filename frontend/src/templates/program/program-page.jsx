@@ -79,6 +79,7 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
     const [collegeCode, setCollegeCode] = useState("");
     const [programCode, setProgramCode] = useState("");
     const [programName, setProgramName] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     const [colleges, setColleges] = useState([]);
 
     // Populate form if editing
@@ -247,8 +248,8 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
                         className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     /> <br />
                     <div className='add-button-container'>
-                        <button type="submit" className='add-program'>
-                            Submit 
+                        <button type="submit" className='add-program' disabled={isLoading}>
+                            {isLoading ? 'Submitting...' : 'Submit'} 
                         </button>
                     </div>
                 </form>
@@ -453,9 +454,9 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                                     Program Name <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
-                            <th>
-                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1'> 
-                                    Actions <FontAwesomeIcon icon={faSort} size='xs' color='#f5f5f500'/> 
+                            <th className="text-center">
+                                <button className="flex items-center justify-center gap-1 text-black px-4 pb-3 w-full">
+                                    Actions
                                 </button>
                             </th>
                         </tr>
@@ -467,7 +468,7 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                                     <td>{p.collegecode || "None"}</td>
                                     <td>{p.programcode}</td>
                                     <td>{p.programname}</td>
-                                    <td>
+                                    <td className='text-center'>
                                         <button className='edit' onClick={() => onEditProgram(p)} > 
                                             <FontAwesomeIcon icon={faPenToSquare} size='xs' color='#000000ff'/>
                                         </button>

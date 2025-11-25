@@ -89,7 +89,7 @@ export default function Dashboard() {
             <Navbar />
             <div className="mx-20 my-7">
                 {/* HEADER */}
-                <div className='leading-none p-8 pt-10 bg-gradient-to-r from-[#18181b] via-[#18181b] to-[#1e2b38] flex flex-col mx-5'>
+                <div className='leading-15 p-8 pt-10 bg-gradient-to-r from-[#18181b] via-[#18181b] to-[#1e2b38] flex flex-col mx-5'>
                     <div>
                         <GradientText
                             colors={["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"]}
@@ -100,7 +100,7 @@ export default function Dashboard() {
                         </GradientText>
                     </div>
                     <div>
-                        <h3 className="mx-3 mt-5 text-gray-200 pb-4 leading-none">Manage, track, and simplify your academic data in one place.  </h3>
+                        <h3 className="mx-3 mt-3 text-gray-200 pb-4 leading-none">Manage, track, and simplify your academic data in one place.  </h3>
                     </div>
                 </div>
 
@@ -219,14 +219,103 @@ export default function Dashboard() {
 
 
 function RecentActivity() {
+    const [activities, setActivities] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadRecentActivities = async () => {
+            setLoading(true);
+            try {
+                const userid = getCurrentUserId();
+                
+                if (!userid) {
+                    console.error('No userid found - user may not be logged in');
+                    setLoading(false);
+                    return;
+                }
+
+                // Fetch recent students
+                const { data: students, error: studentsError } = await supabase
+                    .from('students')
+                    .select('idnum, created_on')
+                    .eq('userid', userid)
+                    .order('created_on', { ascending: false })
+                    .limit(5);
+
+                // Fetch recent programs
+                const { data: programs, error: programsError } = await supabase
+                    .from('programs')
+                    .select('programcode, programname, created_on')
+                    .eq('userid', userid)
+                    .order('created_on', { ascending: false })
+                    .limit(5);
+
+                // Fetch recent colleges
+                const { data: colleges, error: collegesError } = await supabase
+                    .from('colleges')
+                    .select('collegecode, collegename, created_on')
+                    .eq('userid', userid)
+                    .order('created_on', { ascending: false })
+                    .limit(5);
+
+                if (studentsError || programsError || collegesError) {
+                    console.error('Error fetching activities:', studentsError || programsError || collegesError);
+                    setLoading(false);
+                    return;
+                }
+
+                // Combine all activities
+                const allActivities = [
+                    ...(students || []).map(s => ({
+                        type: 'student',
+                        description: `Added student ${s.idnum}`,
+                        date: s.created_on
+                    })),
+                    ...(programs || []).map(p => ({
+                        type: 'program',
+                        description: `Added program ${p.programcode}`,
+                        date: p.created_on
+                    })),
+                    ...(colleges || []).map(c => ({
+                        type: 'college',
+                        description: `Added college ${c.collegecode}`,
+                        date: c.created_on
+                    }))
+                ];
+
+                // Sort by date and take top 5
+                const sortedActivities = allActivities
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 5);
+
+                setActivities(sortedActivities);
+            } catch (err) {
+                console.error('Error loading recent activities:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadRecentActivities();
+    }, []);
+
+    // Format date to readable format
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+        });
+    };
+
     return (
         <div className='border-1 border-gray-400 p-6 mr-5'>
             <div className="">
                 <h1 className='text-base font-bold mb-5'>
                     <FontAwesomeIcon icon={faClockRotateLeft} style={{paddingRight:"10px"}}/>
-                    Recent Activity
+                    Recently Added 
                 </h1>
-                <p className="italic text-gray-500 ml-8 -mt-5 mb-5 text-sm">Data are static only</p>
                 <div>
                     <table className="text-sm w-full border border-gray-100 overflow-hidden">
                         <thead className="bg-[#18181b]">
@@ -241,30 +330,26 @@ function RecentActivity() {
                         </thead>
 
                     <tbody className="divide-y divide-gray-200">
-                        <tr className="hover:bg-gray-50">
-                            <td className="px-4 py-3">Added student 2025-2002</td>
-                            <td className="px-4 py-3">Nov. 15, 2025</td>
-                        </tr>
-
-                        <tr className="hover:bg-gray-50">
-                            <td className="px-4 py-3">Added student 2023-2022</td>
-                            <td className="px-4 py-3">Nov. 14, 2025</td>
-                        </tr>
-
-                        <tr className="hover:bg-gray-50">
-                            <td className="px-4 py-3">Added program BSIT</td>
-                            <td className="px-4 py-3">Nov. 14, 2025</td>
-                        </tr>
-
-                        <tr className="hover:bg-gray-50">
-                            <td className="px-4 py-3">Added student 2022-0427</td>
-                            <td className="px-4 py-3">Nov. 13, 2025</td>
-                        </tr>
-
-                        <tr className="hover:bg-gray-50">
-                            <td className="px-4 py-3">Added program BSECe</td>
-                            <td className="px-4 py-3">Nov. 13, 2025</td>
-                        </tr>
+                        {loading ? (
+                            <tr>
+                                <td colSpan="2" className="px-4 py-3 text-center text-gray-500">
+                                    Loading...
+                                </td>
+                            </tr>
+                        ) : activities.length > 0 ? (
+                            activities.map((activity, index) => (
+                                <tr key={index} className="hover:bg-gray-50">
+                                    <td className="px-4 py-3">{activity.description}</td>
+                                    <td className="px-4 py-3">{formatDate(activity.date)}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="2" className="px-4 py-3 text-center text-gray-500">
+                                    No recent activities
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                     </table>
                 </div>

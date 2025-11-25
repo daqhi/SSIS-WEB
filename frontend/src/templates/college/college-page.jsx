@@ -375,21 +375,23 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                     <table className="text-sm">
                         <thead>
                             <tr className='border-b-2 border-gray-300'>
-                            <th>
-                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortCollegeCode}>
-                                    College Code{" "}
-                                    <FontAwesomeIcon icon={faSort} size="xs" color="#999" />
-                                </button>
-                            </th>
-                            <th>
-                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortCollegeName}>
-                                    College Name{" "}
-                                    <FontAwesomeIcon icon={faSort} size="xs" color="#999" />
-                                </button>
-                            </th>
-                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1'> 
-                                    Actions <FontAwesomeIcon icon={faSort} size='xs' color='#f5f5f500'/> 
-                                </button>
+                                <th>
+                                    <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortCollegeCode}>
+                                        College Code{" "}
+                                        <FontAwesomeIcon icon={faSort} size="xs" color="#999" />
+                                    </button>
+                                </th>
+                                <th>
+                                    <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortCollegeName}>
+                                        College Name{" "}
+                                        <FontAwesomeIcon icon={faSort} size="xs" color="#999" />
+                                    </button>
+                                </th>
+                                <th className="text-center">
+                                    <button className="flex items-center justify-center gap-1 text-black px-4 pb-3 ml-2 w-full">
+                                        Actions
+                                    </button>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -398,7 +400,7 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                                 <tr key={c.collegecode}>
                                     <td>{c.collegecode}</td>
                                     <td>{c.collegename}</td>
-                                    <td>
+                                    <td className="text-center">
                                         <button className="edit" onClick={() => onEditCollege(c)} >
                                             <FontAwesomeIcon icon={faPenToSquare} size="xs" />
                                         </button>

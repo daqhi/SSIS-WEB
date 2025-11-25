@@ -5,6 +5,7 @@ import { getCurrentUserId } from "../../lib/auth";
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { set } from '@cloudinary/url-gen/actions/variable';
 import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSquareCaretRight, faArrowLeft, faArrowRight, faUser } from "@fortawesome/free-solid-svg-icons";
+import { CalendarClock, PersonStanding, SquareUser, User } from 'lucide-react';
 import '../../static/css/pages.css'
 import Navbar from "../components/navbar"
 import Footer from "../components/footer"
@@ -20,6 +21,7 @@ export default function StudentPage() {
     const [refreshKey, setRefreshKey] = useState(0)
     const [showForm, setShowForm] = useState(false)
     const [showStudentDetails, setShowStudentDetails] = useState(false)
+
     const toggleForm = () => {
         setShowForm(!showForm)
         setShowStudentDetails(false)
@@ -90,18 +92,26 @@ export default function StudentPage() {
                         />
                     ) : showStudentDetails ? (
                         <div className="h-screen w-full bg-gray-100 p-10 overflow-y-auto">
+                            <div className='h-30 w-80 rounded-lg bg-gradient-to-tl from-[#18181b] via-[#1e2b38] to-[#293B4D]'/>
                             <img 
                                 src={selectedStudent?.studentprofile || "src/static/images/default.jpg"} 
                                 alt="Student" 
-                                className="w-40 h-40 object-cover rounded-full mx-auto"
+                                className="w-40 h-40 object-cover rounded-full border-8 border-gray-100 mx-auto -mt-20"
                                 onError={(e) => {
                                     e.target.src = "src/static/images/default.jpg";
                                 }}
                             />
+
+                            <h1 className='text-center text-[#FCA311] font-bold text-xl leading-none'>{selectedStudent?.firstname} {selectedStudent?.lastname}  </h1>
+                            <h1 className='text-center text-sm text-gray-600 mb-4'>{selectedStudent?.collegecode||"n/a"}-{selectedStudent?.programcode}</h1>
                             
-                            <h1 className='mt-6 mb-2 font-semibold text-base'>Personal Details</h1>
-                            <div className="flex flex-row text-sm gap-5">
-                                <div>
+                            <h1 className='flex flex-row items-center mt-8 mb-2 font-bold text-base gap-2'>
+                                <SquareUser size={"20"} strokeWidth={'2'}/>
+                                Personal Details
+                            </h1> 
+                            
+                            <div className="flex flex-row text-sm gap-10 ml-7">
+                                <div className='text-gray-600'>
                                     <h1>ID Number: </h1>
                                     <h1>First Name: </h1>
                                     <h1>Last Name: </h1>
@@ -122,10 +132,13 @@ export default function StudentPage() {
                                 </div>
                             </div>  
 
-                            <h1 className='mt-6 mb-2 font-semibold text-base'>History</h1>
-                            <div className="flex flex-row text-sm">
+                            <h1 className='flex flex-row mt-8 mb-2 font-semibold text-base gap-2 items-center'>
+                                <CalendarClock size={"20"} strokeWidth={'2'}/>
+                                History
+                            </h1>
+                            <div className="flex flex-row text-sm ml-7">
                                 <div>
-                                    <h1>Added on (date)</h1>
+                                    <h1>Added on {selectedStudent?.created_on}</h1>
                                     <h1>Updated on (date)</h1>
                                     <h1>Updated on (date)</h1>
                                 </div>
@@ -148,8 +161,10 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
     const [lastName, setLastName] = useState("");
     const [sex, setSex ] = useState("");
     const [yearLevel, setYearLevel ] = useState("");
-    const [program, setProgram] = useState(""); //for drop down
-    const [programs, setPrograms] = useState([])
+    const [program, setProgram] = useState(""); 
+    const [college, setCollege] = useState("");
+    const [programs, setPrograms] = useState([])//for drop down
+    const [isLoading, setIsLoading] = useState(false);
     
 
     useEffect(() => {
@@ -160,6 +175,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             setSex(editingStudent.sex);
             setYearLevel(editingStudent.yearlevel);
             setProgram(editingStudent.programcode);
+            setCollege(editingStudent.collegecode || "");
         } else {
             setIdNum("");
             setFirstName("");
@@ -167,6 +183,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             setSex("");
             setYearLevel("");
             setProgram("");
+            setCollege("");
         }
     }, [editingStudent])
 
@@ -183,7 +200,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
 
                 const { data, error } = await supabase
                     .from('programs')
-                    .select('*')
+                    .select('*, collegecode')
                     .eq('userid', userid);
 
                 if (error) {
@@ -201,10 +218,23 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
         loadPrograms();
     }, []);
 
+    // Auto-populate college when program changes
+    useEffect(() => {
+        if (program && program !== "None") {
+            const selectedProgram = programs.find(p => p.programcode === program);
+            if (selectedProgram) {
+                setCollege(selectedProgram.collegecode || "");
+            }
+        } else {
+            setCollege("");
+        }
+    }, [program, programs]);
+
 
     //handler to add student
     async function handleSubmit(e) {
         e.preventDefault();
+        setIsLoading(true);
 
         let studentprofile = null;
 
@@ -219,14 +249,22 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             }
         }
 
-        if (!idNum || !firstName || !lastName || !sex || !yearLevel || !program) {
-            alert("All fields are required!");
+        if (!idNum.match(/^\d{4}-\d{4}$/)) {
+            alert("ID Number must be in the format YYYY-NNNN.");
+            setIsLoading(false);
             return;
-        }
+        } else if (!idNum || !firstName || !lastName || !sex || !yearLevel || !program) {
+            alert("All fields are required!");
+            setIsLoading(false);
+            return;
+        } 
 
         if (editingStudent) {
-            const confirmed = window.confirm("Are you sure you want to update this student’s information?");
-            if (!confirmed) return; // stop if user cancels
+            const confirmed = window.confirm("Are you sure you want to update this student's information?");
+            if (!confirmed) {
+                setIsLoading(false);
+                return; // stop if user cancels
+            }
         }
 
         const payload = {
@@ -237,11 +275,13 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             sex: sex,
             yearlevel: yearLevel,
             programcode: program === "None" ? null : program,
+            collegecode: college || null,
         };
 
         const userid = getCurrentUserId();
         if (!userid) {
             alert('You must be logged in to add/edit students.');
+            setIsLoading(false);
             return;
         }
 
@@ -259,7 +299,8 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                         lastname: lastName,
                         sex: sex,
                         yearlevel: yearLevel,
-                        programcode: program === "None" ? null : program
+                        programcode: program === "None" ? null : program,
+                        collegecode: college || null
                     })
                     .eq('idnum', editingStudent.idnum)
                     .eq('userid', userid);
@@ -294,9 +335,12 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             setSex("");
             setYearLevel("");
             setProgram("");
+            setCollege("");
         } catch (err) {
             console.error("Error submitting form:", err);
             alert("Something went wrong: " + err.message);
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -308,11 +352,11 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                 <form onSubmit={handleSubmit}>
                     <label className="font-semibold text-base">Upload Photo: </label> <br />
                     <input 
-                    type='file'
-                    accept='image/*'
-                    onChange={(e) => setPhotoFile(e.target.files[0])}
-                    disabled={!!editingStudent}
-                    className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
+                        type='file'
+                        accept='image/*'
+                        onChange={(e) => setPhotoFile(e.target.files[0])}
+                        disabled={!!editingStudent}
+                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
                     /> <br />
                     
                     <label className="font-semibold text-base">ID Number: </label> <br />
@@ -386,8 +430,12 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
 
 
                     <div className='add-button-container'>
-                        <button type="submit" className='bg-[#FCA311] -mt-8 w-full w-full h-10 text-white font-bold hover:bg-[#e5940e]'>
-                            Submit 
+                        <button 
+                            type="submit" 
+                            disabled={isLoading}
+                            className='bg-[#FCA311] -mt-8 w-full w-full h-10 text-white font-bold hover:bg-[#e5940e] disabled:opacity-50 disabled:cursor-not-allowed'
+                        >
+                            {isLoading ? 'Submitting...' : 'Submit'}
                         </button>
                     </div>
                 </form>
@@ -646,11 +694,12 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                                     Program <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
                             </th>
-                            <th>
-                                <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1'> 
-                                    Actions <FontAwesomeIcon icon={faSort} size='xs' color='#f5f5f500'/> 
+                            <th className="text-center">
+                                <button className="flex items-center justify-center gap-1 text-black px-4 pb-3 w-full">
+                                    Actions
                                 </button>
                             </th>
+
                         </tr>
                         </thead>
                         <tbody>
@@ -660,7 +709,7 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                                     <td>{s.firstname}</td>
                                     <td>{s.lastname}</td>
                                     <td>{s.sex}</td>
-                                    <td>{s.yearlevel}</td>
+                                    <td className='text-center'>{s.yearlevel}</td>
                                     <td>{s.programcode || "None"}</td>
                                     <td>
                                         <button className='edit' onClick={() => onEditStudent(s)} > 

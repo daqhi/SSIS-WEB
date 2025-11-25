@@ -102,7 +102,7 @@ function Navbar() {
                 
                         <div className="submenu">
                             <div className="submenu-item">
-                                <a href="#" className="submenu-link">
+                                <a href="#" className="submenu-link" onClick={() => navigate("/user-profile")}>
                                     <FontAwesomeIcon icon={faUser} style={{color:"#767676ff", paddingRight: "10px"}}/>
                                     Profile
                                 </a>

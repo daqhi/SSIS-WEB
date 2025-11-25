@@ -13,6 +13,7 @@ import Analytics from './templates/analytics/analytics-page.jsx'
 import CollegePage from './templates/college/college-page.jsx'
 import ProgramPage from './templates/program/program-page.jsx'
 import StudentPage from './templates/student/student-page.jsx'
+import UserProfile from './templates/components/userprofile.jsx'
 
 const router = createBrowserRouter([
     { path: "/sign-in", element: <SignIn /> },
@@ -62,6 +63,14 @@ const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <StudentPage />
+            </ProtectedRoute>
+        )
+    },
+    { 
+        path: '/user-profile', 
+        element: (
+            <ProtectedRoute>
+                <UserProfile />
             </ProtectedRoute>
         )
     },
