@@ -139,8 +139,6 @@ export default function StudentPage() {
                             <div className="flex flex-row text-sm ml-7">
                                 <div>
                                     <h1>Added on {selectedStudent?.created_on}</h1>
-                                    <h1>Updated on (date)</h1>
-                                    <h1>Updated on (date)</h1>
                                 </div>
                             </div> 
                         </div>
