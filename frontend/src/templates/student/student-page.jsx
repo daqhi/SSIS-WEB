@@ -5,7 +5,7 @@ import { getCurrentUserId } from "../../lib/auth";
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { set } from '@cloudinary/url-gen/actions/variable';
 import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faBars, faArrowLeft, faArrowRight, faUser, faSliders } from "@fortawesome/free-solid-svg-icons";
-import { CalendarClock, PersonStanding, SquareUser, User } from 'lucide-react';
+import { CalendarClock, PersonStanding, SquareUser, User, X } from 'lucide-react';
 import '../../static/css/pages.css'
 import Navbar from "../components/navbar"
 import Footer from "../components/footer"
@@ -14,6 +14,14 @@ import Modal, { AlertModal, ConfirmModal } from '../components/modal';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
+const createEmptyFilters = () => ({
+    sex: '',
+    yearLevel: '',
+    program: '',
+    startDate: '',
+    endDate: '',
+});
+
 export default function StudentPage() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -21,8 +29,8 @@ export default function StudentPage() {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0)
     const [showForm, setShowForm] = useState(false)
-    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
     const [showStudentDetails, setShowStudentDetails] = useState(false)
+    const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
 
     const toggleForm = () => {
         setShowForm(!showForm)
@@ -42,7 +50,7 @@ export default function StudentPage() {
     return (
         <div>
             <Navbar />
-            <div className='flex flex-row h-screen w-full overflow-y-auto'>
+            <div className='flex flex-row min-h-screen w-full'>
                 <div className="directory-wrapper">
                     <div className="breadcrumb-container">
                         <nav className="breadcrumb">
@@ -167,9 +175,8 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
     const [yearLevel, setYearLevel ] = useState("");
     const [program, setProgram] = useState(""); 
     const [college, setCollege] = useState("");
-    const [programs, setPrograms] = useState([])//for drop down
+    const [programs, setPrograms] = useState([])
     const [isLoading, setIsLoading] = useState(false);
-    
 
     useEffect(() => {
         if (editingStudent) {
@@ -349,8 +356,8 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
     }
 
     return (
-        <div className='h-screen w-full border-l-2 overflow-y-auto shadow-md'>
-            <div className='font-bold text-4xl bg-[#18181b] text-white p-6 text-center'>
+        <div className='border-l-2 h-full'>
+            <div className='font-bold text-4xl bg-[#18181b] text-white p-6 py-10 text-center'>
                 Student Form
                 <p className='text-sm font-thin italic'>Add new student here</p>
             </div>
@@ -494,16 +501,24 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
 // ===================== STUDENT DIRECTORY ===================== //
 
 function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails }) {
-    const [students, setStudents] = useState([])
+    const [students, setStudents] = useState([]);
+    const [allStudents, setAllStudents] = useState([]);
     const [sortOrder, setSortOrder] = useState("asc");
     const [programs, setPrograms] = useState([]);
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [searchField, setSearchField] = useState('all');
+    const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
 
     //for pagination
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
-    const indexOfLast = currentPage * rowsPerPage;
+    const totalPages = Math.max(1, Math.ceil(students.length / rowsPerPage));
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+    const indexOfLast = safeCurrentPage * rowsPerPage;
     const indexOfFirst = indexOfLast - rowsPerPage;
     const currentStudents = students.slice(indexOfFirst, indexOfLast);
+    const hasResults = students.length > 0;
 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [studentToDelete, setStudentToDelete] = useState(null);
@@ -540,6 +555,7 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                     collegecode: student.collegecode || student.programs?.collegecode || null
                 }));
 
+                setAllStudents(studentsWithCollege);
                 setStudents(studentsWithCollege);
             } catch (err) {
                 console.error('Unexpected error:', err);
@@ -547,7 +563,92 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
         };
 
         loadStudents();
-    }, [refreshKey])
+    }, [refreshKey]);
+
+    useEffect(() => {
+        const normalizedSearch = searchKeyword.trim().toLowerCase();
+        const start = activeFilters.startDate ? new Date(activeFilters.startDate) : null;
+        if (start) {
+            start.setHours(0, 0, 0, 0);
+        }
+        const end = activeFilters.endDate ? new Date(activeFilters.endDate) : null;
+        if (end) {
+            end.setHours(23, 59, 59, 999);
+        }
+
+        const filtered = allStudents.filter((student) => {
+            let matchesSearch = true;
+            if (normalizedSearch) {
+                if (searchField === 'all') {
+                    const textMatches = [
+                        student.idnum,
+                        student.firstname,
+                        student.lastname,
+                        student.sex,
+                        student.programcode,
+                        student.collegecode,
+                        student.yearlevel,
+                    ].some((value) => value && value.toString().toLowerCase().includes(normalizedSearch));
+
+                    const matchesNoneProgram = !student.programcode && normalizedSearch.includes('none');
+                    matchesSearch = textMatches || matchesNoneProgram;
+                } else {
+                    let fieldValue = '';
+                    switch (searchField) {
+                        case 'idnum':
+                            fieldValue = student.idnum || '';
+                            break;
+                        case 'firstname':
+                            fieldValue = student.firstname || '';
+                            break;
+                        case 'lastname':
+                            fieldValue = student.lastname || '';
+                            break;
+                        case 'sex':
+                            fieldValue = student.sex || '';
+                            break;
+                        case 'yearlevel':
+                            fieldValue = student.yearlevel != null ? String(student.yearlevel) : '';
+                            break;
+                        case 'program':
+                            fieldValue = student.programcode || '';
+                            break;
+                        default:
+                            fieldValue = '';
+                    }
+
+                    if (searchField === 'program') {
+                        matchesSearch = fieldValue.toLowerCase().includes(normalizedSearch) || (!fieldValue && normalizedSearch.includes('none'));
+                    } else {
+                        matchesSearch = fieldValue.toLowerCase().includes(normalizedSearch);
+                    }
+                }
+            }
+
+            const matchesSex = !activeFilters.sex || student.sex === activeFilters.sex;
+            const matchesYearLevel = !activeFilters.yearLevel || String(student.yearlevel) === activeFilters.yearLevel;
+            const matchesProgram = !activeFilters.program || (student.programcode || '') === activeFilters.program;
+
+            let matchesTimeframe = true;
+            if (start || end) {
+                if (!student.created_on) {
+                    matchesTimeframe = false;
+                } else {
+                    const created = new Date(student.created_on);
+                    if (Number.isNaN(created.getTime())) {
+                        matchesTimeframe = false;
+                    } else {
+                        matchesTimeframe = (!start || created >= start) && (!end || created <= end);
+                    }
+                }
+            }
+
+            return matchesSearch && matchesSex && matchesYearLevel && matchesProgram && matchesTimeframe;
+        });
+
+        setStudents(filtered);
+        setCurrentPage(1);
+    }, [allStudents, searchKeyword, searchField, activeFilters]);
 
     // Load programs for dropdown filter
     useEffect(() => {
@@ -607,7 +708,8 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
             }
 
             alert('Student deleted successfully!');
-            setStudents(students.filter((s) => s.idnum !== idNum));
+            setAllStudents((prev) => prev.filter((s) => s.idnum !== idNum));
+            setStudents((prev) => prev.filter((s) => s.idnum !== idNum));
         } catch (err) {
             console.error('Error deleting student:', err);
             alert('An error occurred while deleting.');
@@ -615,70 +717,20 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
     }
 
     // for searching
-    async function handleSearch(keyword) {
-        if (!keyword.trim()) {
-            // Reload all students if search is empty
-            const userid = getCurrentUserId();
-            if (!userid) return;
-
-            const { data, error } = await supabase
-                .from("students")
-                .select("*, programs(collegecode)")
-                .eq("userid", userid);
-            
-            if (error) {
-                console.error("Error fetching students:", error);
-                return;
-            }
-            
-            const studentsWithCollege = (data || []).map(student => ({
-                ...student,
-                collegecode: student.collegecode || student.programs?.collegecode || null
-            }));
-            
-            setStudents(studentsWithCollege);
-            return;
-        }
-
-        try {
-            const userid = getCurrentUserId();
-            if (!userid) return;
-
-            // First fetch all students for the user
-            const { data, error } = await supabase
-                .from("students")
-                .select("*, programs(collegecode)")
-                .eq("userid", userid);
-
-            if (error) {
-                console.error("Error searching students:", error);
-                return;
-            }
-
-            // Map to flatten and ensure collegecode
-            const studentsWithCollege = (data || []).map(student => ({
-                ...student,
-                collegecode: student.collegecode || student.programs?.collegecode || null
-            }));
-
-            // Filter locally to handle "None" display for null values
-            const filtered = studentsWithCollege.filter((student) => {
-                const searchLower = keyword.toLowerCase();
-                return (
-                    student.idnum?.toLowerCase().includes(searchLower) ||
-                    student.firstname?.toLowerCase().includes(searchLower) ||
-                    student.lastname?.toLowerCase().includes(searchLower) ||
-                    student.sex?.toLowerCase().includes(searchLower) ||
-                    student.programcode?.toLowerCase().includes(searchLower) ||
-                    (!student.programcode && searchLower.includes('none'))
-                );
-            });
-
-            setStudents(filtered);
-        } catch (err) {
-            console.error("Error searching students:", err);
-        }
+    function handleSearch(keyword) {
+        setSearchKeyword(keyword);
     }
+
+    const handleApplyFilters = (filters) => {
+        setActiveFilters(filters);
+    };
+
+    const handleCloseAdvancedSearch = (shouldReset = false) => {
+        if (shouldReset) {
+            setActiveFilters(createEmptyFilters());
+        }
+        setShowAdvancedSearch(false);
+    };
 
 
     function toggleSortIdNum() {
@@ -747,7 +799,7 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
 
 
     return (
-        <div className='area-main-directory'>
+        <div className='area-main-directory mb-10'>
             <h1 className="font-bold text-4xl mt-8">Student Directory</h1>
             <div className='flex flex-row items-center mt-5 mb-4 bg-white gap-2'>
                 <div className='flex flex-row text-sm h-8'>
@@ -757,53 +809,38 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                     </div>
                 </div>
                 <div className='flex gap-2'>
-                    <select className='bg-gray-100 px-1 h-8 text-[13px]'>
-                        <option>All Fields</option>
-                        <option>All ID Numbers</option>
-                        <option>All First Names</option>
-                        <option>All Last Names</option>
-                        <option>All Sexes</option>
-                        <option>All Year Levels</option>
-                        <option>All Programs</option>
+                    <select 
+                        className='bg-gray-100 px-1 h-8 text-[13px]'
+                        value={searchField}
+                        onChange={(e) => setSearchField(e.target.value)}
+                    >
+                        <option value='all'>All Fields</option>
+                        <option value='idnum'>ID Number</option>
+                        <option value='firstname'>First Name</option>
+                        <option value='lastname'>Last Name</option>
+                        <option value='sex'>Sex</option>
+                        <option value='yearlevel'>Year Level</option>
+                        <option value='program'>Program</option>
                     </select>
                 </div>
-            </div>
-
-            {/* SHOULD BE HIDDEN */}
-            <div className='flex flex-row gap-2'>
-                <div className='border border-gray-300 w-1/2 p-3'>
-                    <p className='text-xs font-semibold mb-2'>Select Fields</p>
-                    <div className='flex gap-2 h-6 text-xs'>
-                        <select className='w-1/3 bg-gray-100 px-1'>
-                            <option>All Sexes</option>
-                        </select>
-                        <select className='w-1/3 bg-gray-100 px-1'>
-                            <option>All Year Levels</option>
-                        </select>
-                        <select className='w-1/3 bg-gray-100 px-1'>
-                            <option>All Programs</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div className='border border-gray-300 p-3 w-1/2'>
-                    <p className='text-xs font-semibold mb-2'>Select Timeframe</p>
-                    <div className='flex gap-2 h-6 text-xs items-center h-6'>
-                        <p className='text-sm text-[#fca31c] font-bold'>Students Added: </p>
-                        <input type='date' className='bg-gray-100 h-6 px-2 w-1/3'></input>
-                        -
-                        <input type='date' className='bg-gray-100 h-6 px-2 w-1/3'></input>
-                    </div>
-                </div>
-            </div>
-
-            <div className='flex flex-row mt-2'>
-                <div className='w-full bg-[#fca31c] h-[1px]' />
-                <button className='bg-[#fca31c] h-8 p-1 px-3 text-sm font-semibold text-white w-1/2'> 
-                    <FontAwesomeIcon icon={faSliders} size='lg' color='white' className='mr-3'/> 
+                <button 
+                    onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                    className='bg-[#fca31c] h-8 text-[13px] text-white px-2 hover:bg-[#e89419] transition-colors'
+                > 
+                    <FontAwesomeIcon icon={faSliders} size='lg' color='white' className='mr-1 scale-80'/> 
                     Advanced Search
                 </button>
-                <div className='w-full bg-[#fca31c] h-[1px]'/>
+            </div>
+
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                showAdvancedSearch ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'
+            }`}>
+                <AdvancedSearch 
+                    programs={programs} 
+                    filters={activeFilters}
+                    onApply={handleApplyFilters}
+                    onClose={handleCloseAdvancedSearch}
+                />
             </div>
 
             <div className='w-full'>
@@ -835,7 +872,7 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                                 <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortYearLevel} > 
                                     Year Level <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
                                 </button>
-                            </th>
+                            </th>   
                             <th>
                                 <button className='flex text-black text-left px-4 pb-3 items-center justify-center gap-1' onClick={toggleSortProgram}> 
                                     Program <FontAwesomeIcon icon={faSort} size='xs' color='#999'/> 
@@ -850,47 +887,53 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                         </tr>
                         </thead>
                         <tbody>
-                            {currentStudents.map((s) => (
-                                <tr key={s.idnum}>
-                                    <td>{s.idnum}</td>
-                                    <td>{s.firstname}</td>
-                                    <td>{s.lastname}</td>
-                                    <td>{s.sex}</td>
-                                    <td className='text-center'>{s.yearlevel}</td>
-                                    <td>{s.programcode || "None"}</td>
-                                    <td>
-                                        <button className='edit' onClick={() => onEditStudent(s)} > 
-                                            <FontAwesomeIcon icon={faPenToSquare} size='xs' color='#000000ff'/>
-                                        </button>
-                                        
-                                        <button className='delete' onClick={() => openDeleteModal(s.idnum)}> 
-                                            <FontAwesomeIcon icon={faTrash} size='xs' color='#FCA311'/> 
-                                        </button>
-
-                                        <button className='edit ml-1' onClick={() => onToggleStudentDetails(s)}>
-                                            <FontAwesomeIcon icon={faUser} size='xs' color='#999999ff'/>
-                                        </button>
-                                    </td>
+                            {currentStudents.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className='py-6 text-center text-sm text-gray-500'>No results</td>
                                 </tr>
-                            ))}
+                            ) : (
+                                currentStudents.map((s) => (
+                                    <tr key={s.idnum}>
+                                        <td>{s.idnum}</td>
+                                        <td>{s.firstname}</td>
+                                        <td>{s.lastname}</td>
+                                        <td>{s.sex}</td>
+                                        <td className='text-center'>{s.yearlevel}</td>
+                                        <td>{s.programcode || "None"}</td>
+                                        <td>
+                                            <button className='edit' onClick={() => onEditStudent(s)} > 
+                                                <FontAwesomeIcon icon={faPenToSquare} size='xs' color='#000000ff'/>
+                                            </button>
+                                            
+                                            <button className='delete' onClick={() => openDeleteModal(s.idnum)}> 
+                                                <FontAwesomeIcon icon={faTrash} size='xs' color='#FCA311'/> 
+                                            </button>
+
+                                            <button className='edit' onClick={() => onToggleStudentDetails(s)}>
+                                                <FontAwesomeIcon icon={faUser} size='xs' color='#999999ff'/>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
 
                     <div className="flex flex-row justify-between text-sm mx-4 my-3 items-center">
                         <button 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1,1))} 
-                            style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}
+                            style={{ visibility: !hasResults || safeCurrentPage === 1 ? 'hidden' : 'visible' }}
                             className='font-semibold text-[#FCA311]'
                         >
                             <FontAwesomeIcon className='page-icon' icon={faArrowLeft} size="sm" color="#FCA311" /> 
                             Prev
                         </button>
 
-                        <span className='font-semibold'>Page {currentPage} of {Math.ceil(students.length / rowsPerPage)} </span>
+                        <span className='font-semibold'>Page {hasResults ? safeCurrentPage : 0} of {hasResults ? totalPages : 0} </span>
 
                         <button 
-                            onClick = {() => setCurrentPage(prev => prev < Math.ceil(students.length/rowsPerPage) ? prev +1 : prev )}
-                            style={{ visibility: currentPage === Math.ceil(students.length/rowsPerPage) ? 'hidden' : 'visible' }} 
+                            onClick = {() => setCurrentPage(prev => (prev < totalPages ? prev + 1 : prev))}
+                            style={{ visibility: !hasResults || safeCurrentPage === totalPages ? 'hidden' : 'visible' }} 
                             className='font-semibold text-[#FCA311]'
                         >
                             Next 
@@ -920,3 +963,118 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
     );
 }
 
+function AdvancedSearch({ programs, filters, onApply, onClose }) {
+    const [selectedSex, setSelectedSex] = useState(filters.sex || '');
+    const [selectedYearLevel, setSelectedYearLevel] = useState(filters.yearLevel || '');
+    const [selectedProgram, setSelectedProgram] = useState(filters.program || '');
+    const [startDate, setStartDate] = useState(filters.startDate || '');
+    const [endDate, setEndDate] = useState(filters.endDate || '');
+
+    useEffect(() => {
+        setSelectedSex(filters.sex || '');
+        setSelectedYearLevel(filters.yearLevel || '');
+        setSelectedProgram(filters.program || '');
+        setStartDate(filters.startDate || '');
+        setEndDate(filters.endDate || '');
+    }, [filters]);
+
+    const handleApply = () => {
+        onApply?.({
+            sex: selectedSex,
+            yearLevel: selectedYearLevel,
+            program: selectedProgram,
+            startDate,
+            endDate,
+        });
+    };
+
+    const handleCancel = () => {
+        const clearedFilters = createEmptyFilters();
+        setSelectedSex('');
+        setSelectedYearLevel('');
+        setSelectedProgram('');
+        setStartDate('');
+        setEndDate('');
+        onApply?.(clearedFilters);
+        onClose?.(true);
+    };
+
+    return (
+        <div className=''>
+            <div className='flex flex-row gap-2'>
+                <div className='border border-gray-300 w-1/2 p-3'>
+                    <p className='text-xs font-semibold mb-2'>Select Fields</p>
+                    <div className='flex gap-2 h-6 text-xs'>
+                        <select 
+                            className='w-1/3 bg-gray-100 px-1'
+                            value={selectedSex}
+                            onChange={(e) => setSelectedSex(e.target.value)}
+                        >
+                            <option value="">All Sexes</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                        </select>
+                        <select 
+                            className='w-1/3 bg-gray-100 px-1'
+                            value={selectedYearLevel}
+                            onChange={(e) => setSelectedYearLevel(e.target.value)}
+                        >
+                            <option value="">All Year Levels</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                        <select 
+                            className='w-1/3 bg-gray-100 px-1'
+                            value={selectedProgram}
+                            onChange={(e) => setSelectedProgram(e.target.value)}
+                        >
+                            <option value="">All Programs</option>
+                            {programs.map((p) => (
+                                <option key={p.programcode} value={p.programcode}>
+                                    {p.programcode}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+                <div className='border border-gray-300 p-3 w-1/2'>
+                    <p className='text-xs font-semibold mb-2'>Select Timeframe</p>
+                    <div className='flex gap-2 h-6 text-xs items-center h-6'>
+                        <p className='text-sm text-[#fca31c] font-bold'>Students Added: </p>
+                        <input 
+                            type='date' 
+                            className='bg-gray-100 h-6 px-2 w-1/3'
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                        />
+                        -
+                        <input 
+                            type='date' 
+                            className='bg-gray-100 h-6 px-2 w-1/3'
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <div className='flex justify-end mt-2 gap-2'>
+                <button 
+                    className='flex flex-row items-center gap-1 bg-gray-100 p-1 px-3 text-sm hover:bg-gray-200 transition-colors'
+                    onClick={handleCancel}
+                >
+                    <X size={'15'} className='-mt-[1px]'/>
+                    Close
+                </button>
+                <button 
+                    className='bg-[#fca31a] text-white p-1 text-sm px-3 hover:bg-[#e89419] transition-colors'
+                    onClick={handleApply}
+                >
+                    Apply Filter
+                </button>
+            </div>
+        </div>
+    )
+}

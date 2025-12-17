@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faSort, faPenToSquare, faTrash, faArrowLeft, faArrowRight, } from "@fortawesome/free-solid-svg-icons";
 import Navbar from "../components/navbar";
+import Footer from "../components/footer";
 import supabase from "../../lib/supabaseClient";
 import { getCurrentUser, getCurrentUserId } from "../../lib/auth";
 
@@ -66,6 +67,7 @@ export default function CollegePage() {
                     />
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

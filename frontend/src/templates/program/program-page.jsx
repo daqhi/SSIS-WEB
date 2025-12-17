@@ -1,13 +1,23 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSquareCaretRight, faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSliders, faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { X } from "lucide-react";
 import '../../static/css/pages.css'
 import Navbar from '../components/navbar';
+import Footer from '../components/footer';
 import { getCurrentUserId } from '../../lib/auth';
 import supabase from '../../lib/supabaseClient';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
+
+const createEmptyFilters = () => ({
+    sex: '',
+    yearLevel: '',
+    program: '',
+    startDate: '',
+    endDate: '',
+});
 
 export default function ProgramPage() {
     const navigate = useNavigate();
@@ -41,8 +51,8 @@ export default function ProgramPage() {
                                 <button className="breadcrumb-button" onClick={() => navigate("/college-page")}>Program Directory </button>
                             </span>
                             <span className="breadcrumb-line"></span>
-                            <button className="open-form-button" onClick={toggleForm}>
-                                {showForm ? 'Close Student Form' : 'Open Student Form'}
+                            <button className="open-form-button text-[#fca311]" onClick={toggleForm}>
+                                {showForm ? 'Close Program Form' : 'Open Program Form'}
                             </button>
                         </nav>
                     </div>
@@ -67,6 +77,7 @@ export default function ProgramPage() {
                     />
                 </div>
             </div>
+            <Footer />
         </div>
     )
 }
@@ -208,47 +219,64 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
 
 
     return (
-        <div className='bg-gray-100 form-container p-10 pb-55'>
-            <h1 className='font-bold text-4xl mb-5 pt-10'>Program Form</h1>
-            <hr />
-            <div className='mt-5'>
+        <div className='block border-l-2 h-full'>
+            <div className='font-bold text-4xl bg-[#18181b] text-white p-6 py-10 text-center'>
+                Program Form
+                <p className='text-sm font-thin italic'>Add new program here</p>
+            </div>
+            
+            <div className='bg-white p-7'>
                 <form onSubmit={handleSubmit}>
-                    <label className="font-semibold text-base">College: </label>
-                    <select 
-                        value={collegeCode}
-                        onChange={(e) => setCollegeCode(e.target.value)}
-                        required
-                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
-                    >
-                        <option value="null">Select College Code</option>
-                        {colleges.map((c) => (
-                            <option key={c.collegecode}>
-                                {c.collegecode}
-                            </option>
-                        ))}
-                    </select>
 
-                    <label className="font-semibold text-base">Program Code: </label> <br />
-                    <input
-                        type="text"
-                        value={programCode}
-                        onChange={(e) => setProgramCode(e.target.value)}
-                        placeholder='e.g. BSCS'
-                        required
-                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
-                    /> <br />
+                    <label className="font-semibold text-base">Program Information: </label>
+                    <div className='flex flex-row mt-4'>
+                        <label className="text-base text-[13px] w-1/3">College: </label>
+                        <select
+                            value={collegeCode}
+                            onChange={(e) => setCollegeCode(e.target.value)}
+                            required
+                            className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
+                        >
+                            <option value="null">Select College Code</option>
+                            {colleges.map((c) => (
+                                <option key={c.collegecode}>
+                                    {c.collegecode}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className='flex flex-row'>
+                        <label className="text-base text-[13px] w-1/3">Program Code: </label> <br />
+                        <input
+                            type="text"
+                            value={programCode}
+                            onChange={(e) => setProgramCode(e.target.value)}
+                            placeholder='e.g. BSCS'
+                            required
+                            className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
+                        />
+                    </div>
                     
-                    <label className="font-semibold text-base">Program Name: </label> <br />
-                    <input
-                        type="text"
-                        value={programName}
-                        onChange={(e) => setProgramName(e.target.value)}
-                        placeholder='e.g. Bachelors of Science in Computer Science'
+                    <div className='flex flex-row'>
+                        <label className="text-base text-[13px] w-1/3">Program Name: </label> <br />
+                        <input
+                            type="text"
+                            value={programName}
+                            onChange={(e) => setProgramName(e.target.value)}
+                            placeholder='e.g. Bachelors of Science in Computer Science'
                         required
                         className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
-                    /> <br />
+                    /> 
+                    </div>
+
+
                     <div className='add-button-container'>
-                        <button type="submit" className='add-program' disabled={isLoading}>
+                        <button 
+                            type="submit" 
+                            className='w-full bg-[#FCA311] h-10 text-white font-bold hover:bg-[#e5940e] disabled:opacity-50 disabled:cursor-not-allowed'
+                            disabled={isLoading}
+                        >
                             {isLoading ? 'Submitting...' : 'Submit'} 
                         </button>
                     </div>
@@ -266,7 +294,11 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
 function ProgramDirectory( {refreshKey, onEditProgram }) {
     const [programs, setPrograms] = useState([])
     const [sortOrder, setSortOrder] = useState("asc");
+    const [searchField, setSearchField] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
+    const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+    
     const rowsPerPage = 10;
     const indexOfLast = currentPage * rowsPerPage;
     const indexOfFirst = indexOfLast - rowsPerPage;
@@ -420,17 +452,58 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
         }
     }
 
+    const handleApplyFilters = (filters) => {
+        setActiveFilters(filters);
+    };
+
+    const handleCloseAdvancedSearch = (shouldReset = false) => {
+        if (shouldReset) {
+            setActiveFilters(createEmptyFilters());
+        }
+        setShowAdvancedSearch(false);
+    };
+
 
     return (
-        <div className='area-main-directory'>
-            <div className='flex flex-row justify-between items-center mt-8 mb-10'>
-                <h1 className="font-bold text-4xl">Program Directory</h1>
-                <div className='text-sm w-72'>
-                    <div className='border-1 border-gray-300 p-2 flex items-center gap-2 bg-white'>
+        <div className='area-main-directory mb-10'>
+            <h1 className="font-bold text-4xl mt-8">Program Directory</h1>
+            <div className='flex flex-row items-center mt-5 mb-4 bg-white gap-2'>
+                <div className='flex flex-row text-sm h-8'>
+                    <div className='border-[1px] border-gray-400 p-2 flex items-center gap-2 bg-white w-62'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input className='w-full focus:outline-none w-full' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
+                        <input className='w-full focus:outline-none h-4 text-[13px] border-none' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
                     </div>
                 </div>
+                <div className='flex gap-2'>
+                    <select 
+                        className='bg-gray-100 px-1 h-8 text-[13px]'
+                        value={searchField}
+                        onChange={(e) => setSearchField(e.target.value)}
+                    >
+                        <option value='all'>All Fields</option>
+                        <option value='idnum'>College Code</option>
+                        <option value='firstname'>Program Code</option>
+                        <option value='lastname'>Program Name</option>
+                    </select>
+                </div>
+                <button 
+                    onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                    className='bg-[#fca31c] h-8 text-[13px] text-white px-2 hover:bg-[#e89419] transition-colors'
+                > 
+                    <FontAwesomeIcon icon={faSliders} size='lg' color='white' className='mr-1 scale-80'/> 
+                    Advanced Search
+                </button>
+            </div>
+
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                showAdvancedSearch ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'
+            }`}>
+                <AdvancedSearch 
+                    programs={programs} 
+                    filters={activeFilters}
+                    onApply={handleApplyFilters}
+                    onClose={handleCloseAdvancedSearch}
+                />
             </div>
 
 
@@ -512,4 +585,112 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
             </div>
         </div>
     );
+}
+
+
+function AdvancedSearch({ programs, filters, onApply, onClose }) {
+    const [selectedCollegeCode, setSelectedCollegeCode] = useState(filters.collegeCode || '');
+    const [selectedProgramCode, setSelectedProgramCode] = useState(filters.programCode || '');
+    const [selectedProgramName, setSelectedProgramName] = useState(filters.programName || '');
+    const [startDate, setStartDate] = useState(filters.startDate || '');
+    const [endDate, setEndDate] = useState(filters.endDate || '');
+
+    useEffect(() => {
+        setSelectedCollegeCode(filters.collegeCode || '');
+        setSelectedProgramCode(filters.programCode || '');
+        setSelectedProgramName(filters.programName || '');
+        setStartDate(filters.startDate || '');
+        setEndDate(filters.endDate || '');
+    }, [filters]);
+
+    const handleApply = () => {
+        onApply?.({
+            collegeCode: selectedCollegeCode,
+            programCode: selectedProgramCode,
+            programName: selectedProgramName,
+            startDate,
+            endDate,
+        });
+    };
+
+    const handleCancel = () => {
+        const clearedFilters = createEmptyFilters();
+        setSelectedCollegeCode('');
+        setSelectedProgramCode('');
+        setSelectedProgramName('');
+        setStartDate('');
+        setEndDate('');
+        onApply?.(clearedFilters);
+        onClose?.(true);
+    };
+
+    return (
+        <div className=''>
+            <div className='flex flex-row gap-2'>
+                <div className='border border-gray-300 w-1/2 p-3'>
+                    <p className='text-xs font-semibold mb-2'>Select Fields</p>
+                    <div className='flex gap-2 h-6 text-xs'>
+                        <select 
+                            className='w-1/3 bg-gray-100 px-1'
+                            value={selectedCollegeCode}
+                            onChange={(e) => setSelectedCollegeCode(e.target.value)}
+                        >
+                            {/* TO FIX */}
+                            <option value="">All College Codes</option>
+                        </select>
+                        <select 
+                            className='w-1/3 bg-gray-100 px-1'
+                            value={selectedProgramCode}
+                            onChange={(e) => setSelectedProgramCode(e.target.value)}
+                        >
+                            <option value="">All Program Codes</option>
+                        </select>
+                        <select 
+                            className='w-1/3 bg-gray-100 px-1'
+                            value={selectedProgramName}
+                            onChange={(e) => setSelectedProgramName(e.target.value)}
+                        >
+                            <option value="">All Programs Name</option>
+                            
+                        </select>
+                    </div>
+                </div>
+                <div className='border border-gray-300 p-3 w-1/2'>
+                    <p className='text-xs font-semibold mb-2'>Select Timeframe</p>
+                    <div className='flex gap-2 h-6 text-xs items-center h-6'>
+                        <p className='text-sm text-[#fca31c] font-bold'>Students Added: </p>
+                        <input 
+                            type='date' 
+                            className='bg-gray-100 h-6 px-2 w-1/3'
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                        />
+                        -
+                        <input 
+                            type='date' 
+                            className='bg-gray-100 h-6 px-2 w-1/3'
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <div className='flex justify-end mt-2 gap-2'>
+                <button 
+                    className='flex flex-row items-center gap-1 bg-gray-100 p-1 px-3 text-sm hover:bg-gray-200 transition-colors'
+                    onClick={handleCancel}
+                >
+                    <X size={'15'} className='-mt-[1px]'/>
+                    Close
+                </button>
+                <button 
+                    className='bg-[#fca31a] text-white p-1 text-sm px-3 hover:bg-[#e89419] transition-colors'
+                    onClick={handleApply}
+                >
+                    Apply Filter
+                </button>
+            </div>
+        </div>
+    )
 }

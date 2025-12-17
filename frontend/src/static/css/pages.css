@@ -73,9 +73,6 @@ body {
     font-weight: 600;
     padding: 5px 10px;
     font-family: 'Montserrat';
-    /* background-color: #ffffff; */
-    /* color: #FCA311;
-    border-color: #FCA311; */
     cursor: pointer;
 } .open-form-button:hover {
     transition: all 0.3s ease;
@@ -301,7 +298,6 @@ body {
     color:#666;
     background: #ffffff;
     border-width: 1px;
-    border-radius:5px;
     border-color:#aaa;
     border-style: solid;
     background:#ececec;
@@ -317,8 +313,7 @@ body {
     padding: 2px;
     padding-left:15px;
     padding-right:15px;
-    margin-bottom: 3px;
-    border-radius:5px;
+    margin-right: 5px;
     border-color: #FCA311;
     border-style: solid;
     border-width: 1px;
@@ -369,8 +364,9 @@ body {
 
  /* Make sure the form itself expands fully */
 .form-wrapper .area-main-form {
-    width: 75%;
-    height: 100vh;
+    width: 100%;
+    min-height: 100%;
+    height: auto;
 }
 
 
