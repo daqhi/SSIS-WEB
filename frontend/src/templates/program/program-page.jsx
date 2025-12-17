@@ -42,7 +42,7 @@ export default function ProgramPage() {
                             </span>
                             <span className="breadcrumb-line"></span>
                             <button className="open-form-button" onClick={toggleForm}>
-                                Open Program Form
+                                {showForm ? 'Close Student Form' : 'Open Student Form'}
                             </button>
                         </nav>
                     </div>

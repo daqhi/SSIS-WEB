@@ -73,14 +73,13 @@ body {
     font-weight: 600;
     padding: 5px 10px;
     font-family: 'Montserrat';
-    background-color: #ffffff;
-    color: #FCA311;
-    border-color: #FCA311;
+    /* background-color: #ffffff; */
+    /* color: #FCA311;
+    border-color: #FCA311; */
     cursor: pointer;
 } .open-form-button:hover {
     transition: all 0.3s ease;
-    transform: scale(1.1);
-    box-shadow: 0 0 5px rgb(252, 163, 17);
+    box-shadow: 0 0 3px rgb(252, 163, 17);
 }
 
 
@@ -192,7 +191,7 @@ body {
     width: 100%;
     padding: 5px 28px 5px 8px; 
     font-size: inherit; 
-    border: 1px solid #aaa;
+    border: 1px solid blue;
     background-color: #fff;
     margin: 0;
     cursor: pointer;
@@ -382,7 +381,7 @@ body {
 
 
 
-select {
+/* select {
     font-size: small;
     padding: 5px;
     font-family: 'Montserrat';
@@ -393,15 +392,10 @@ select {
     box-sizing: border-box;
     margin-bottom: 10px;
     background: #fff;
-    appearance: none;           /* Removes default arrow in most browsers */
-    -webkit-appearance: none;   /* Removes default arrow in Safari/Chrome */
-    -moz-appearance: none;      /* Removes default arrow in Firefox */
-    background-image: url("data:image/svg+xml;charset=UTF-8,<svg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M6 8L0.803847 0.5L11.1962 0.5L6 8Z' fill='%23aaa'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px 12px;
+    appearance: none;           Removes default arrow in most browsers
+    -webkit-appearance: none;    Removes default arrow in Safari/Chrome
+    -moz-appearance: none;       Removes default arrow in Firefox 
     cursor: pointer;
-    max-height: 3%;           /* Height of the closed select */
     overflow-y: auto;
 }select:focus {
     outline: none;
@@ -410,7 +404,7 @@ select {
     transition: width 0.3s ease, background-color 0.3s ease;
 }
 
-
+*/
 
 
 
@@ -418,9 +412,8 @@ select {
 .add-button-container {
     display: flex;
     justify-content: center;
-    margin-top: 70px;
-    margin-bottom: 40px;
-    width: 95%;
+    margin-top: 50px;
+    width: 100%;
 } .add-button-container:hover {
     box-shadow: 0 0 15px rgba(255, 187, 79, 0.5);
     transition: box-shadow 0.3s ease; 

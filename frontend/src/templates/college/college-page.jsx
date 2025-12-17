@@ -40,7 +40,7 @@ export default function CollegePage() {
                             </span>
                             <span className="breadcrumb-line"></span>
                             <button className="open-form-button" onClick={toggleForm}>
-                                Open College Form 
+                                {showForm ? 'Close College Form' : 'Open College Form'}
                             </button>
                         </nav>
                     </div>

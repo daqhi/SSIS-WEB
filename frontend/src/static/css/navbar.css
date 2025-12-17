@@ -19,11 +19,9 @@
     display: flex;
     align-items: center;
     background: #ffffff;
-    border: 0 solid #cecece;
     border-bottom-width: 1px;
     padding: 0;
     background: linear-gradient(to right, #18181b, #18181b, #1e2b38);
-    border-bottom: 1px solid #c9c9c9;
 }
 
 .nav-bar-greeting {
@@ -137,7 +135,7 @@
     /* border-radius: 5px; */
     /* background: #f8f8f8; */
     
-    border-bottom: 1px solid #c9c9c9;
+    /* border-bottom: 1px solid #c9c9c9; */
     background: linear-gradient(to right, #18181b, #18181b);
     /* box-shadow: -1px 0px 0px rgba(139, 139, 139, 0.2); */
 } .nav-right:hover {

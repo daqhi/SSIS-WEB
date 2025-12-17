@@ -212,7 +212,7 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
-            <Footer />
+            {/* <Footer /> */}
         </div>
     )
 }
@@ -310,14 +310,8 @@ function RecentActivity() {
     };
 
     return (
-        <div className='border-1 border-gray-400 p-6 mr-5'>
-            <div className="">
-                <h1 className='text-base font-bold mb-5'>
-                    <FontAwesomeIcon icon={faClockRotateLeft} style={{paddingRight:"10px"}}/>
-                    Recently Added 
-                </h1>
-                <div>
-                    <table className="text-sm w-full border border-gray-100 overflow-hidden">
+                <div className='mr-5 -mt-2'>
+                    <table className="text-sm w-full border-[1px] border-gray-400 overflow-hidden mr-5">
                         <thead className="bg-[#18181b]">
                             <tr>
                                 <th className="text-left px-4 py-3 w-2/3 font-semibold text-gray-200">
@@ -353,8 +347,6 @@ function RecentActivity() {
                     </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
     )
 }
 
@@ -382,21 +374,21 @@ function QuickActionsCard(){
 
             <div className="flex flex-row flex-wrap gap-2 justify-between">
                 <button
-                    className="flex-1 leading-none max-w-30 text-start font-semibold bg-gray-100 text-black h-15 text-sm hover:bg-[#18181b] hover:text-gray-100 py-2 px-4 w-full flex flex-row items-center trasition-all duration-200 ease-in-out"
+                    className="flex-1 leading-none w-1/3 text-start font-semibold bg-gray-100 text-black h-15 text-sm hover:bg-[#18181b] hover:text-gray-100 py-2 px-4 flex flex-row items-center trasition-all duration-200 ease-in-out"
                     onClick={() => handleNavigate("/college-page", { state: { openForm: true } })}
                 >
                     <FontAwesomeIcon icon={faPlus} style={{paddingRight:"10px", color:"#FCA311"}}/>
                     <p>Add college</p>
                 </button>
                 <button
-                    className="flex-1 leading-none max-w-30 text-start font-semibold bg-gray-100 text-black h-15 text-sm hover:bg-[#18181b] hover:text-gray-100 py-2 px-4 w-full flex flex-row items-center trasition-all duration-200 ease-in-out"
+                    className="flex-1 leading-none w-1/3 text-start font-semibold bg-gray-100 text-black h-15 text-sm hover:bg-[#18181b] hover:text-gray-100 py-2 px-4 w-full flex flex-row items-center trasition-all duration-200 ease-in-out"
                     onClick={() => handleNavigate("/program-page", { state: { openForm: true } })}
                 >
                     <FontAwesomeIcon icon={faPlus} style={{paddingRight:"10px", color:"#FCA311"}}/>
                     Add program
                 </button>
                 <button
-                    className="flex-1 leading-none max-w-30 text-start font-semibold bg-gray-100 text-black h-15 text-sm hover:bg-[#18181b] hover:text-gray-100 py-2 px-4 w-full flex flex-row items-center trasition-all duration-200 ease-in-out"
+                    className="flex-1 leading-none w-1/3 text-start font-semibold bg-gray-100 text-black h-15 text-sm hover:bg-[#18181b] hover:text-gray-100 py-2 px-4 w-full flex flex-row items-center trasition-all duration-200 ease-in-out"
                     onClick={() => handleNavigate("/student-page", { state: { openForm: true } })}
                 >
                     <FontAwesomeIcon icon={faPlus} style={{paddingRight:"10px", color:"#FCA311"}}/>

@@ -4,12 +4,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { getCurrentUserId } from "../../lib/auth";
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { set } from '@cloudinary/url-gen/actions/variable';
-import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSquareCaretRight, faArrowLeft, faArrowRight, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faBars, faArrowLeft, faArrowRight, faUser, faSliders } from "@fortawesome/free-solid-svg-icons";
 import { CalendarClock, PersonStanding, SquareUser, User } from 'lucide-react';
 import '../../static/css/pages.css'
 import Navbar from "../components/navbar"
 import Footer from "../components/footer"
 import supabase from "../../lib/supabaseClient";
+import Modal, { AlertModal, ConfirmModal } from '../components/modal';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
@@ -20,6 +21,7 @@ export default function StudentPage() {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0)
     const [showForm, setShowForm] = useState(false)
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false)
     const [showStudentDetails, setShowStudentDetails] = useState(false)
 
     const toggleForm = () => {
@@ -52,8 +54,8 @@ export default function StudentPage() {
                                 <button className="breadcrumb-button" onClick={() => navigate("/student-page")}>Student Directory </button>
                             </span>
                             <span className="breadcrumb-line"></span>
-                            <button className="open-form-button" onClick={toggleForm}>
-                                Open Student Form
+                            <button className="open-form-button text-[#fca311]" onClick={toggleForm}>
+                                {showForm ? 'Close Student Form' : 'Open Student Form'}
                             </button>
                         </nav>
                     </div>
@@ -102,45 +104,49 @@ export default function StudentPage() {
                                 }}
                             />
 
-                            <h1 className='text-center text-[#FCA311] font-bold text-xl leading-none'>{selectedStudent?.firstname} {selectedStudent?.lastname}  </h1>
-                            <h1 className='text-center text-sm text-gray-600 mb-4'>{selectedStudent?.collegecode||"n/a"}-{selectedStudent?.programcode}</h1>
+                            <h1 className='text-center text-[#FCA311] font-black text-2xl leading-none mt-3'>{selectedStudent?.firstname} {selectedStudent?.lastname}  </h1>
+                            <h1 className='text-center text-med text-black mb-5'>{selectedStudent?.collegecode||"N/A"}-{selectedStudent?.programcode}</h1>
                             
-                            <h1 className='flex flex-row items-center mt-8 mb-2 font-bold text-base gap-2'>
-                                <SquareUser size={"20"} strokeWidth={'2'}/>
-                                Personal Details
-                            </h1> 
-                            
-                            <div className="flex flex-row text-sm gap-10 ml-7">
-                                <div className='text-gray-600'>
-                                    <h1>ID Number: </h1>
-                                    <h1>First Name: </h1>
-                                    <h1>Last Name: </h1>
-                                    <h1>Sex: </h1>
-                                    <h1>Year Level:</h1>
-                                    <h1>College:</h1>
-                                    <h1>Program:</h1>
+                            <div className='bg-white p-6 rounded-lg border-[1px] border-gray-200 mb-4'>
+                                <h1 className='flex flex-row mb-4 items-center font-bold text-base gap-2'>
+                                    <SquareUser size={"20"} strokeWidth={'2'}/>
+                                    Personal Details
+                                </h1>
+                                
+                                <div className="flex flex-row text-sm gap-4">
+                                    <div className='text-gray-600 w-1/3'>
+                                        <h1>ID Number: </h1>
+                                        <h1>First Name: </h1>
+                                        <h1>Last Name: </h1>
+                                        <h1>Sex: </h1>
+                                        <h1>Year Level:</h1>
+                                        <h1>College:</h1>
+                                        <h1>Program:</h1>
+                                    </div>
+                                    {/* area to populate */}
+                                    <div>
+                                        <h1>{selectedStudent?.idnum || 'N/A'}</h1>
+                                        <h1>{selectedStudent?.firstname || 'N/A'}</h1>
+                                        <h1>{selectedStudent?.lastname || 'N/A'}</h1>
+                                        <h1>{selectedStudent?.sex || 'N/A'}</h1>
+                                        <h1>{selectedStudent?.yearlevel || 'N/A'}</h1>
+                                        <h1>{selectedStudent?.collegecode || 'N/A'}</h1>
+                                        <h1>{selectedStudent?.programcode || 'N/A'}</h1>
+                                    </div>
                                 </div>
-                                {/* area to populate */}
-                                <div>
-                                    <h1>{selectedStudent?.idnum || 'N/A'}</h1>
-                                    <h1>{selectedStudent?.firstname || 'N/A'}</h1>
-                                    <h1>{selectedStudent?.lastname || 'N/A'}</h1>
-                                    <h1>{selectedStudent?.sex || 'N/A'}</h1>
-                                    <h1>{selectedStudent?.yearlevel || 'N/A'}</h1>
-                                    <h1>{selectedStudent?.collegecode || 'N/A'}</h1>
-                                    <h1>{selectedStudent?.programcode || 'N/A'}</h1>
-                                </div>
-                            </div>  
+                            </div>
 
-                            <h1 className='flex flex-row mt-8 mb-2 font-semibold text-base gap-2 items-center'>
-                                <CalendarClock size={"20"} strokeWidth={'2'}/>
-                                History
-                            </h1>
-                            <div className="flex flex-row text-sm ml-7">
-                                <div>
-                                    <h1>Added on {selectedStudent?.created_on}</h1>
+                            <div className='bg-white p-6 rounded-lg border-[1px] border-gray-200'>
+                                <h1 className='flex flex-row mb-2 font-semibold text-base gap-2 items-center'>
+                                    <CalendarClock size={"20"} strokeWidth={'2'}/>
+                                    History
+                                </h1>
+                                <div className="flex flex-row text-sm">
+                                    <div>
+                                        <h1>Added on {selectedStudent?.created_on ? new Date(selectedStudent.created_on).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</h1>
+                                    </div>
                                 </div>
-                            </div> 
+                            </div>
                         </div>
                     ) : null}
                 </div>
@@ -343,95 +349,133 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
     }
 
     return (
-        <div className='h-screen w-full bg-gray-100 px-10 pt-10 overflow-y-auto'>
-            <h1 className='font-bold text-4xl mb-5 '>Student Form</h1>
-            <hr />
-            <div className='mt-5'>
-                <form onSubmit={handleSubmit}>
-                    <label className="font-semibold text-base">Upload Photo: </label> <br />
-                    <input 
-                        type='file'
-                        accept='image/*'
-                        onChange={(e) => setPhotoFile(e.target.files[0])}
-                        disabled={!!editingStudent}
-                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
-                    /> <br />
+        <div className='h-screen w-full border-l-2 overflow-y-auto shadow-md'>
+            <div className='font-bold text-4xl bg-[#18181b] text-white p-6 text-center'>
+                Student Form
+                <p className='text-sm font-thin italic'>Add new student here</p>
+            </div>
+            
+            <div className='bg-white p-7'>
+                <form onSubmit={handleSubmit} className='flex flex-col'>
                     
-                    <label className="font-semibold text-base">ID Number: </label> <br />
-                    <input
-                        type="text"
-                        value={idNum}
-                        onChange={(e) => setIdNum(e.target.value)}
-                        placeholder='YYYY-NNNN'
-                        required
-                        disabled={!!editingStudent}
-                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
-                    /> <br />
+                    {/* TO FIX */}
+                    <div className='flex flex-col'>
+                        <label className="font-semibold text-base mb-3">Upload Photo </label>
+                        <input
+                            type='file'
+                            accept='image/*'
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                                    if (file.size > maxSize) {
+                                        alert('File size exceeds 5MB. Please upload a smaller file.');
+                                        e.target.value = ''; // for clearing the input
+                                        setPhotoFile(null);
+                                    } else {
+                                        setPhotoFile(file);
+                                    }
+                                }
+                            }}
+                            disabled={!!editingStudent}
+                            className="bg-white border-1 border-gray-300 w-full text-gray-500 p-1 mb-3 text-sm"
+                        />
+                    </div>
                     
-                    <label className="font-semibold text-base">First Name: </label> <br />
-                    <input
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder='Enter first name'
-                        required
-                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
-                    /> <br />
+                    <label className='font-bold mt-4 mb-3'>Identification Details</label>
+                    <div className='flex flex-row'>
+                        <label className="text-base text-[13px] w-1/3">ID Number: </label> <br />
+                        <input
+                            type="text"
+                            value={idNum}
+                            onChange={(e) => setIdNum(e.target.value)}
+                            placeholder='YYYY-NNNN'
+                            required
+                            disabled={!!editingStudent}
+                            className="bg-white border-1 border-gray-300 h-8 w-full p-2 mb-3 text-sm"
+                        />
+                    </div>
+                    
+                    <label className='font-bold mt-4 mb-3'>Personal Information</label>
+                    <div className='flex flex-row'>
+                        <label className="text-base text-[13px] w-1/3">First Name: </label>
+                        <input
+                            type="text"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            placeholder='Enter first name'
+                            required
+                            className="bg-white border-1 border-gray-300 h-8 w-full p-2 text-sm mb-2"
+                        />
+                    </div>
 
-                    <label className="font-semibold text-base">Last Name: </label> <br />
-                    <input
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder='Enter last name'
-                        required
-                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
-                    /> <br />
+                    <div className='flex flex-row'>
+                        <label className="text-base text-[13px] w-1/3">Last Name: </label>
+                        <input
+                            type="text"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            placeholder='Enter last name'
+                            required
+                            className="bg-white border-1 border-gray-300 h-8 w-full p-2 text-sm mb-2"
+                        />
+                    </div>
 
-                    <label className="font-semibold text-base">Sex: </label> <br />
-                    <select
-                        value={sex}
-                        onChange={(e) => setSex(e.target.value)}
-                        required
-                    >
-                        <option value="">Select sex</option>
-                        <option value="Female">Female</option>
-                        <option value="Male">Male</option>
-                    </select>
+                    <div className='flex flex-row w-full'>
+                        <label className="text-base text-[13px] w-1/3">Sex: </label>
+                        <select
+                            value={sex}
+                            onChange={(e) => setSex(e.target.value)}
+                            required
+                            className="border-[1px] border-gray-300 bg-white w-full h-8 p-1 text-sm text-gray-500 mb-3"
+                        >
+                            <option value="">Select sex</option>
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                        </select>
+                    </div>
 
-                    <label className="font-semibold text-base">Year Level: </label> <br />
-                    <select
-                        value={yearLevel}
-                        onChange={(e) => setYearLevel(e.target.value)}
-                        required
-                    >
-                        <option value="">Select year level</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value='3'>3</option>
-                        <option value='4'>4</option>
-                    </select>
 
-                    <label className="font-semibold text-base">Program: </label>
-                    <select 
-                        value={program || "None"}
-                        onChange={(e) => setProgram(e.target.value)}
-                        required
-                    >
-                        <option value="">Select Program</option>
-                        {programs.map((p) => (
-                            <option key={p.programcode} value={p.programcode}>
-                                {p.programcode}
-                            </option>
-                        ))}
-                    </select>
+                    <label className='font-bold mt-4 mb-3'>Academic Information</label>
+                    <div className="flex flex-row">
+                        <label className="text-[13px] w-1/3 items-center">Year Level: </label>
+                        <select
+                            value={yearLevel}
+                            onChange={(e) => setYearLevel(e.target.value)}
+                            required
+                            className="border-[1px] border-gray-300 bg-white w-full h-8 p-1 text-sm text-gray-500 pr-8 mb-2"
+                        >
+                            <option value="">Select year level</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value='3'>3</option>
+                            <option value='4'>4</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-row">
+                        <label className="text-[13px] w-1/3">Program: </label>
+                        <select 
+                            value={program || "None"}
+                            onChange={(e) => setProgram(e.target.value)}
+                            required
+                            className="border-[1px] border-gray-300 bg-white w-full h-8 p-1 text-sm text-gray-500 pr-8"
+                        >
+                            <option value="">Select Program</option>
+                            {programs.map((p) => (
+                                <option key={p.programcode} value={p.programcode}>
+                                    {p.programcode}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
 
                     <div className='add-button-container'>
                         <button 
                             type="submit" 
                             disabled={isLoading}
-                            className='bg-[#FCA311] -mt-8 w-full w-full h-10 text-white font-bold hover:bg-[#e5940e] disabled:opacity-50 disabled:cursor-not-allowed'
+                            className='w-full bg-[#FCA311] h-10 text-white font-bold hover:bg-[#e5940e] disabled:opacity-50 disabled:cursor-not-allowed'
                         >
                             {isLoading ? 'Submitting...' : 'Submit'}
                         </button>
@@ -452,6 +496,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
 function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails }) {
     const [students, setStudents] = useState([])
     const [sortOrder, setSortOrder] = useState("asc");
+    const [programs, setPrograms] = useState([]);
 
     //for pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -459,6 +504,14 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
     const indexOfLast = currentPage * rowsPerPage;
     const indexOfFirst = indexOfLast - rowsPerPage;
     const currentStudents = students.slice(indexOfFirst, indexOfLast);
+
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [studentToDelete, setStudentToDelete] = useState(null);
+
+    function openDeleteModal(idNum) {
+        setStudentToDelete(idNum);
+        setDeleteModalOpen(true);
+    }
 
     //for loading students SUPABASE
     useEffect(() => {
@@ -473,7 +526,7 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
 
                 const { data, error } = await supabase
                     .from('students')
-                    .select('*')
+                    .select('*, programs(collegecode)')
                     .eq('userid', userid);
 
                 if (error) {
@@ -481,7 +534,13 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                     return;
                 }
 
-                setStudents(data || []);
+                // Map data to flatten the structure and ensure collegecode is set
+                const studentsWithCollege = (data || []).map(student => ({
+                    ...student,
+                    collegecode: student.collegecode || student.programs?.collegecode || null
+                }));
+
+                setStudents(studentsWithCollege);
             } catch (err) {
                 console.error('Unexpected error:', err);
             }
@@ -490,10 +549,41 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
         loadStudents();
     }, [refreshKey])
 
+    // Load programs for dropdown filter
+    useEffect(() => {
+        const loadPrograms = async () => {
+            try {
+                const userid = getCurrentUserId();
+                
+                if (!userid) {
+                    console.error('No userid found - user may not be logged in');
+                    return;
+                }
+
+                const { data, error } = await supabase
+                    .from('programs')
+                    .select('programcode')
+                    .eq('userid', userid)
+                    .order('programcode');
+
+                if (error) {
+                    console.error('Error fetching programs:', error);
+                    return;
+                }
+
+                setPrograms(data || []);
+            } catch (err) {
+                console.error('Unexpected error:', err);
+            }
+        };
+
+        loadPrograms();
+    }, []);
+
 
     //for deleting students
     async function handleDelete(idNum) {
-        if (!window.confirm(`Are you sure you want to delete ${idNum}?`)) return;
+        if (!studentToDelete) return;
 
         try {
             const userid = getCurrentUserId();
@@ -533,14 +623,20 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
 
             const { data, error } = await supabase
                 .from("students")
-                .select("*")
+                .select("*, programs(collegecode)")
                 .eq("userid", userid);
             
             if (error) {
                 console.error("Error fetching students:", error);
                 return;
             }
-            setStudents(data || []);
+            
+            const studentsWithCollege = (data || []).map(student => ({
+                ...student,
+                collegecode: student.collegecode || student.programs?.collegecode || null
+            }));
+            
+            setStudents(studentsWithCollege);
             return;
         }
 
@@ -551,7 +647,7 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
             // First fetch all students for the user
             const { data, error } = await supabase
                 .from("students")
-                .select("*")
+                .select("*, programs(collegecode)")
                 .eq("userid", userid);
 
             if (error) {
@@ -559,8 +655,14 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                 return;
             }
 
+            // Map to flatten and ensure collegecode
+            const studentsWithCollege = (data || []).map(student => ({
+                ...student,
+                collegecode: student.collegecode || student.programs?.collegecode || null
+            }));
+
             // Filter locally to handle "None" display for null values
-            const filtered = (data || []).filter((student) => {
+            const filtered = studentsWithCollege.filter((student) => {
                 const searchLower = keyword.toLowerCase();
                 return (
                     student.idnum?.toLowerCase().includes(searchLower) ||
@@ -646,16 +748,63 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
 
     return (
         <div className='area-main-directory'>
-            <div className='flex flex-row justify-between items-center mt-8 mb-10'>
-                <h1 className="font-bold text-4xl">Student Directory</h1>
-                <div className='text-sm w-72'>
-                    <div className='border-1 border-gray-300 p-2 flex items-center gap-2 bg-white'>
+            <h1 className="font-bold text-4xl mt-8">Student Directory</h1>
+            <div className='flex flex-row items-center mt-5 mb-4 bg-white gap-2'>
+                <div className='flex flex-row text-sm h-8'>
+                    <div className='border-[1px] border-gray-400 p-2 flex items-center gap-2 bg-white w-62'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input className='w-full focus:outline-none w-full' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
+                        <input className='w-full focus:outline-none h-4 text-[13px] border-none' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
+                    </div>
+                </div>
+                <div className='flex gap-2'>
+                    <select className='bg-gray-100 px-1 h-8 text-[13px]'>
+                        <option>All Fields</option>
+                        <option>All ID Numbers</option>
+                        <option>All First Names</option>
+                        <option>All Last Names</option>
+                        <option>All Sexes</option>
+                        <option>All Year Levels</option>
+                        <option>All Programs</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* SHOULD BE HIDDEN */}
+            <div className='flex flex-row gap-2'>
+                <div className='border border-gray-300 w-1/2 p-3'>
+                    <p className='text-xs font-semibold mb-2'>Select Fields</p>
+                    <div className='flex gap-2 h-6 text-xs'>
+                        <select className='w-1/3 bg-gray-100 px-1'>
+                            <option>All Sexes</option>
+                        </select>
+                        <select className='w-1/3 bg-gray-100 px-1'>
+                            <option>All Year Levels</option>
+                        </select>
+                        <select className='w-1/3 bg-gray-100 px-1'>
+                            <option>All Programs</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className='border border-gray-300 p-3 w-1/2'>
+                    <p className='text-xs font-semibold mb-2'>Select Timeframe</p>
+                    <div className='flex gap-2 h-6 text-xs items-center h-6'>
+                        <p className='text-sm text-[#fca31c] font-bold'>Students Added: </p>
+                        <input type='date' className='bg-gray-100 h-6 px-2 w-1/3'></input>
+                        -
+                        <input type='date' className='bg-gray-100 h-6 px-2 w-1/3'></input>
                     </div>
                 </div>
             </div>
 
+            <div className='flex flex-row mt-2'>
+                <div className='w-full bg-[#fca31c] h-[1px]' />
+                <button className='bg-[#fca31c] h-8 p-1 px-3 text-sm font-semibold text-white w-1/2'> 
+                    <FontAwesomeIcon icon={faSliders} size='lg' color='white' className='mr-3'/> 
+                    Advanced Search
+                </button>
+                <div className='w-full bg-[#fca31c] h-[1px]'/>
+            </div>
 
             <div className='w-full'>
                 <div className="w-full table">
@@ -714,7 +863,7 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                                             <FontAwesomeIcon icon={faPenToSquare} size='xs' color='#000000ff'/>
                                         </button>
                                         
-                                        <button className='delete' onClick={() => handleDelete(s.idnum)}> 
+                                        <button className='delete' onClick={() => openDeleteModal(s.idnum)}> 
                                             <FontAwesomeIcon icon={faTrash} size='xs' color='#FCA311'/> 
                                         </button>
 
@@ -750,6 +899,23 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                     </div>
                 </div>
             </div>
+            
+            <ConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setStudentToDelete(null);
+                }}
+                onConfirm={() => {
+                    handleDelete(studentToDelete);
+                    setDeleteModalOpen(false);
+                    setStudentToDelete(null);
+                }}
+                title="Confirm Delete"
+                message={`Are you sure you want to delete student ${studentToDelete}? This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+            />
         </div>
     );
 }
