@@ -342,7 +342,7 @@ body {
     padding: 85px 50px 0 50px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     border-left-width: 1px;
-    max-height: fit-content;
+    /* max-height: fit-content; */
 }
 
 
@@ -352,6 +352,7 @@ body {
     max-width: 0;
     overflow: hidden;
     opacity: 0;
+    height: auto;
     transform: translateX(50px);
     transition: max-width 0.4s ease, opacity 0.3s ease, transform 0.4s ease;
 }
@@ -375,32 +376,6 @@ body {
 
 
 
-
-
-/* select {
-    font-size: small;
-    padding: 5px;
-    font-family: 'Montserrat';
-    border-style: solid;
-    border-width: 1px;
-    border-color: #aaa;
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 10px;
-    background: #fff;
-    appearance: none;           Removes default arrow in most browsers
-    -webkit-appearance: none;    Removes default arrow in Safari/Chrome
-    -moz-appearance: none;       Removes default arrow in Firefox 
-    cursor: pointer;
-    overflow-y: auto;
-}select:focus {
-    outline: none;
-    border-color: #939393;
-    box-shadow: 0 0 5px rgba(144, 144, 144, 0.5);
-    transition: width 0.3s ease, background-color 0.3s ease;
-}
-
-*/
 
 
 
@@ -467,4 +442,26 @@ body {
 
 .page-icon {
     padding: 0 5px 0 5px;
+}
+
+
+
+
+
+
+
+
+/* REINDEER */
+.reindeer-wrapper {
+  position: absolute;
+  bottom: 0px;
+  left: 20px;
+  width: 180px;
+  pointer-events: none;
+}
+
+.reindeer-wrapper canvas,
+.reindeer-wrapper svg {
+  width: 100%;
+  height: auto;
 }

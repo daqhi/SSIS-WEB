@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSliders, faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faSort, faPenToSquare, faTrash, faSliders, faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { X } from "lucide-react";
 import '../../static/css/pages.css'
 import Navbar from '../components/navbar';
@@ -12,9 +12,7 @@ import supabase from '../../lib/supabaseClient';
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
 const createEmptyFilters = () => ({
-    sex: '',
-    yearLevel: '',
-    program: '',
+    collegeCode: '',
     startDate: '',
     endDate: '',
 });
@@ -40,7 +38,7 @@ export default function ProgramPage() {
         <div>
             <Navbar />
             <div className='directory-content'>
-                <div className="directory-wrapper">
+                <div className="directory-wrapper ">
                     <div className="breadcrumb-container">
                         <nav className="breadcrumb">
                             <span className="breadcrumb-item">
@@ -77,7 +75,6 @@ export default function ProgramPage() {
                     />
                 </div>
             </div>
-            <Footer />
         </div>
     )
 }
@@ -293,16 +290,119 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
 
 function ProgramDirectory( {refreshKey, onEditProgram }) {
     const [programs, setPrograms] = useState([])
-    const [sortOrder, setSortOrder] = useState("asc");
     const [searchField, setSearchField] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
     const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
     const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
     
     const rowsPerPage = 10;
-    const indexOfLast = currentPage * rowsPerPage;
+
+    const getCreatedOnTime = (value) => {
+        if (!value) {
+            return 0;
+        }
+
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+    };
+
+    const sortByCreatedOnDesc = (list) => {
+        return [...(list || [])].sort((a, b) => getCreatedOnTime(b?.created_on) - getCreatedOnTime(a?.created_on));
+    };
+
+    const filteredPrograms = useMemo(() => {
+        let data = [...programs];
+
+        if (searchTerm.trim()) {
+            const query = searchTerm.trim().toLowerCase();
+            data = data.filter((program) => {
+                const college = program.collegecode?.toLowerCase() || '';
+                const code = program.programcode?.toLowerCase() || '';
+                const name = program.programname?.toLowerCase() || '';
+
+                switch (searchField) {
+                    case 'collegecode':
+                        return college.includes(query);
+                    case 'programcode':
+                        return code.includes(query);
+                    case 'programname':
+                        return name.includes(query);
+                    case 'all':
+                    default:
+                        return college.includes(query) || code.includes(query) || name.includes(query);
+                }
+            });
+        }
+
+        const resolveDate = (program) => {
+            const rawValue = program?.created_on;
+            if (!rawValue) {
+                return null;
+            }
+
+            const parsed = new Date(rawValue);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        };
+
+        if (activeFilters.startDate) {
+            const start = new Date(activeFilters.startDate);
+            start.setHours(0, 0, 0, 0);
+            data = data.filter((program) => {
+                const programDate = resolveDate(program);
+                if (!programDate) {
+                    return false;
+                }
+                return programDate >= start;
+            });
+        }
+
+        if (activeFilters.endDate) {
+            const end = new Date(activeFilters.endDate);
+            end.setHours(23, 59, 59, 999);
+            data = data.filter((program) => {
+                const programDate = resolveDate(program);
+                if (!programDate) {
+                    return false;
+                }
+                return programDate <= end;
+            });
+        }
+
+        if (activeFilters.collegeCode) {
+            data = data.filter((program) => program.collegecode === activeFilters.collegeCode);
+        }
+
+        if (sortConfig.key) {
+            const direction = sortConfig.direction === 'asc' ? 1 : -1;
+            data.sort((a, b) => {
+                const aVal = (a?.[sortConfig.key] ?? '').toString().toLowerCase();
+                const bVal = (b?.[sortConfig.key] ?? '').toString().toLowerCase();
+                return direction * aVal.localeCompare(bVal);
+            });
+        } else {
+            data = sortByCreatedOnDesc(data);
+        }
+
+        return data;
+    }, [programs, searchTerm, searchField, activeFilters, sortConfig]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredPrograms.length / rowsPerPage));
+    const safePage = Math.min(currentPage, totalPages);
+    const indexOfLast = safePage * rowsPerPage;
     const indexOfFirst = indexOfLast - rowsPerPage;
-    const currentPrograms = programs.slice(indexOfFirst, indexOfLast);
+    const currentPrograms = filteredPrograms.slice(indexOfFirst, indexOfLast);
+
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, searchField, activeFilters]);
 
     //for loading programs
     useEffect(() => {
@@ -318,13 +418,14 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                 const { data, error } = await supabase
                     .from("programs")
                     .select("*")
-                    .eq("userid", userid);
+                    .eq("userid", userid)
+                    .order('created_on', { ascending: false });
                 
                 if (error) {
                     console.error("Error fetching programs:", error);
                     return;
                 }
-                setPrograms(data || []);
+                setPrograms(sortByCreatedOnDesc(data));
             } catch (error) {
                 console.error("Error loading programs:", error);
             }
@@ -335,38 +436,24 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
 
 
     function toggleSortCollegeCode() {
-        const sorted = [...programs].sort((a, b) => {
-            const aCode = a.collegecode ? a.collegecode.toString() : '';
-            const bCode = b.collegecode ? b.collegecode.toString() : '';
-            return sortOrder === "asc" 
-                ? aCode.localeCompare(bCode) 
-                : bCode.localeCompare(aCode);
+        setSortConfig((prev) => {
+            const direction = prev.key === 'collegecode' && prev.direction === 'asc' ? 'desc' : 'asc';
+            return { key: 'collegecode', direction };
         });
-
-        setPrograms(sorted);
-        setSortOrder(prev => prev === "asc" ? "desc" : "asc");
     }
 
     function toggleSortProgramCode() {
-        const sorted = [...programs].sort((a, b) => {
-            return sortOrder === "asc"
-                ? a.programcode.localeCompare(b.programcode)
-                : b.programcode.localeCompare(a.programcode);
+        setSortConfig((prev) => {
+            const direction = prev.key === 'programcode' && prev.direction === 'asc' ? 'desc' : 'asc';
+            return { key: 'programcode', direction };
         });
-
-        setPrograms(sorted);
-        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     }
 
     function toggleSortProgramName() {
-        const sorted = [...programs].sort((a, b) => {
-            return sortOrder === "asc"
-                ? a.programname.localeCompare(b.programname)
-                : b.programname.localeCompare(a.programname);
+        setSortConfig((prev) => {
+            const direction = prev.key === 'programname' && prev.direction === 'asc' ? 'desc' : 'asc';
+            return { key: 'programname', direction };
         });
-
-        setPrograms(sorted);
-        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     }
 
     //for deleteiing programs
@@ -391,7 +478,7 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                 return;
             } else {
                 alert("Program deleted successfully!");
-                setPrograms(programs.filter((p) => p.programcode !== programCode));
+                setPrograms((prev) => prev.filter((p) => p.programcode !== programCode));
             }
         } catch (err) {
             console.error("Error deleting program:", err);
@@ -401,55 +488,8 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
 
 
     // for searching
-    async function handleSearch(keyword) {
-        if (!keyword.trim()) {
-            // Reload all programs if search is empty
-            const userid = getCurrentUserId();
-            if (!userid) return;
-
-            const { data, error } = await supabase
-                .from("programs")
-                .select("*")
-                .eq("userid", userid);
-            
-            if (error) {
-                console.error("Error fetching programs:", error);
-                return;
-            }
-            setPrograms(data || []);
-            return;
-        }
-
-        try {
-            const userid = getCurrentUserId();
-            if (!userid) return;
-
-            // Search in Supabase using ilike for case-insensitive search
-            const { data, error } = await supabase
-                .from("programs")
-                .select("*")
-                .eq("userid", userid);
-
-            if (error) {
-                console.error("Error searching programs:", error);
-                return;
-            }
-
-            //filter locally
-            const filtered = (data || []).filter((program) => {
-                const serachLower = keyword.toLowerCase();
-                return (
-                    (program.collegecode && program.collegecode.toLowerCase().includes(serachLower)) ||
-                    (program.programcode && program.programcode.toLowerCase().includes(serachLower)) ||
-                    (program.programname && program.programname.toLowerCase().includes(serachLower)) ||
-                    (!program.collegecode && "none".includes(serachLower))
-                )
-            });
-
-            setPrograms(filtered);
-        } catch (err) {
-            console.error("Error searching programs:", err);
-        }
+    function handleSearch(keyword) {
+        setSearchTerm(keyword);
     }
 
     const handleApplyFilters = (filters) => {
@@ -471,7 +511,13 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                 <div className='flex flex-row text-sm h-8'>
                     <div className='border-[1px] border-gray-400 p-2 flex items-center gap-2 bg-white w-62'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input className='w-full focus:outline-none h-4 text-[13px] border-none' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
+                        <input
+                            className='w-full focus:outline-none h-4 text-[13px] border-none'
+                            type='text'
+                            placeholder='Type in a keyword or name...'
+                            value={searchTerm}
+                            onChange={(e)=>handleSearch(e.target.value)}
+                        />
                     </div>
                 </div>
                 <div className='flex gap-2'>
@@ -481,9 +527,9 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                         onChange={(e) => setSearchField(e.target.value)}
                     >
                         <option value='all'>All Fields</option>
-                        <option value='idnum'>College Code</option>
-                        <option value='firstname'>Program Code</option>
-                        <option value='lastname'>Program Name</option>
+                        <option value='collegecode'>College Code</option>
+                        <option value='programcode'>Program Code</option>
+                        <option value='programname'>Program Name</option>
                     </select>
                 </div>
                 <button 
@@ -563,18 +609,18 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                     <div className="flex flex-row justify-between text-sm mx-4 my-3 items-center">
                         <button 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1,1))} 
-                            style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}
+                            style={{ visibility: safePage === 1 ? 'hidden' : 'visible' }}
                             className='font-semibold text-[#FCA311]'
                         >
                             <FontAwesomeIcon className='page-icon' icon={faArrowLeft} size="sm" color="#FCA311" /> 
                             Prev
                         </button>
 
-                        <span className='font-semibold'>Page {currentPage} of {Math.ceil(programs.length / rowsPerPage)} </span>
+                        <span className='font-semibold'>Page {safePage} of {totalPages} </span>
 
                         <button 
-                            onClick = {() => setCurrentPage(prev => prev < Math.ceil(programs.length/rowsPerPage) ? prev +1 : prev )} 
-                            style={{ visibility: currentPage === Math.ceil(programs.length/rowsPerPage) ? 'hidden' : 'visible' }}
+                            onClick = {() => setCurrentPage(prev => prev < totalPages ? prev + 1 : prev )} 
+                            style={{ visibility: safePage === totalPages ? 'hidden' : 'visible' }}
                             className='font-semibold text-[#FCA311]'
                         >
                             Next 
@@ -590,24 +636,31 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
 
 function AdvancedSearch({ programs, filters, onApply, onClose }) {
     const [selectedCollegeCode, setSelectedCollegeCode] = useState(filters.collegeCode || '');
-    const [selectedProgramCode, setSelectedProgramCode] = useState(filters.programCode || '');
-    const [selectedProgramName, setSelectedProgramName] = useState(filters.programName || '');
     const [startDate, setStartDate] = useState(filters.startDate || '');
     const [endDate, setEndDate] = useState(filters.endDate || '');
 
     useEffect(() => {
         setSelectedCollegeCode(filters.collegeCode || '');
-        setSelectedProgramCode(filters.programCode || '');
-        setSelectedProgramName(filters.programName || '');
         setStartDate(filters.startDate || '');
         setEndDate(filters.endDate || '');
     }, [filters]);
 
+    const collegeCodes = useMemo(() => {
+        const uniqueCodes = new Set();
+
+        programs.forEach((program) => {
+            const code = program?.collegecode?.trim();
+            if (code) {
+                uniqueCodes.add(code);
+            }
+        });
+
+        return Array.from(uniqueCodes).sort((a, b) => a.localeCompare(b));
+    }, [programs]);
+
     const handleApply = () => {
         onApply?.({
             collegeCode: selectedCollegeCode,
-            programCode: selectedProgramCode,
-            programName: selectedProgramName,
             startDate,
             endDate,
         });
@@ -616,8 +669,6 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
     const handleCancel = () => {
         const clearedFilters = createEmptyFilters();
         setSelectedCollegeCode('');
-        setSelectedProgramCode('');
-        setSelectedProgramName('');
         setStartDate('');
         setEndDate('');
         onApply?.(clearedFilters);
@@ -635,30 +686,19 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
                             value={selectedCollegeCode}
                             onChange={(e) => setSelectedCollegeCode(e.target.value)}
                         >
-                            {/* TO FIX */}
                             <option value="">All College Codes</option>
-                        </select>
-                        <select 
-                            className='w-1/3 bg-gray-100 px-1'
-                            value={selectedProgramCode}
-                            onChange={(e) => setSelectedProgramCode(e.target.value)}
-                        >
-                            <option value="">All Program Codes</option>
-                        </select>
-                        <select 
-                            className='w-1/3 bg-gray-100 px-1'
-                            value={selectedProgramName}
-                            onChange={(e) => setSelectedProgramName(e.target.value)}
-                        >
-                            <option value="">All Programs Name</option>
-                            
+                            {collegeCodes.map((code) => (
+                                <option key={code} value={code}>
+                                    {code}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
                 <div className='border border-gray-300 p-3 w-1/2'>
                     <p className='text-xs font-semibold mb-2'>Select Timeframe</p>
                     <div className='flex gap-2 h-6 text-xs items-center h-6'>
-                        <p className='text-sm text-[#fca31c] font-bold'>Students Added: </p>
+                        <p className='text-sm text-[#fca31c] font-bold'>Program Added: </p>
                         <input 
                             type='date' 
                             className='bg-gray-100 h-6 px-2 w-1/3'

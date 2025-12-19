@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import supabase from "./lib/supabaseClient.js";
 import "./static/css/index.css";
+import Snowfall from 'react-snowfall';
 
 import SignIn from "./templates/entry/sign-in.jsx";
 import SignUp from "./templates/entry/sign-up.jsx";

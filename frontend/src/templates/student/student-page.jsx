@@ -112,10 +112,11 @@ export default function StudentPage() {
                                 }}
                             />
 
-                            <h1 className='text-center text-[#FCA311] font-black text-2xl leading-none mt-3'>{selectedStudent?.firstname} {selectedStudent?.lastname}  </h1>
-                            <h1 className='text-center text-med text-black mb-5'>{selectedStudent?.collegecode||"N/A"}-{selectedStudent?.programcode}</h1>
+                            <h1 className='text-center text-[#FCA311] font-black text-2xl leading-none mb-1 mt-3'>{selectedStudent?.firstname} {selectedStudent?.lastname}  </h1>
+                            <h1 className='text-center text-md text-black leading-none'>{selectedStudent?.programcode}</h1>
+                            <h1 className='text-center text-sm text-black mb-5 leading-none font-semibold'>{selectedStudent?.collegecode || "N/A"}</h1>
                             
-                            <div className='bg-white p-6 rounded-lg border-[1px] border-gray-200 mb-4'>
+                            <div className='bg-white p-6 border-[1px] border-gray-200 mb-4'>
                                 <h1 className='flex flex-row mb-4 items-center font-bold text-base gap-2'>
                                     <SquareUser size={"20"} strokeWidth={'2'}/>
                                     Personal Details
@@ -144,7 +145,7 @@ export default function StudentPage() {
                                 </div>
                             </div>
 
-                            <div className='bg-white p-6 rounded-lg border-[1px] border-gray-200'>
+                            <div className='bg-white p-6 border-[1px] border-gray-200'>
                                 <h1 className='flex flex-row mb-2 font-semibold text-base gap-2 items-center'>
                                     <CalendarClock size={"20"} strokeWidth={'2'}/>
                                     History
@@ -510,6 +511,19 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
     const [searchField, setSearchField] = useState('all');
     const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
 
+    const getCreatedOnTime = (value) => {
+        if (!value) {
+            return 0;
+        }
+
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+    };
+
+    const sortByCreatedOnDesc = (list) => {
+        return [...(list || [])].sort((a, b) => getCreatedOnTime(b?.created_on) - getCreatedOnTime(a?.created_on));
+    };
+
     //for pagination
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
@@ -542,7 +556,8 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                 const { data, error } = await supabase
                     .from('students')
                     .select('*, programs(collegecode)')
-                    .eq('userid', userid);
+                    .eq('userid', userid)
+                    .order('created_on', { ascending: false });
 
                 if (error) {
                     console.error('Error fetching students:', error);
@@ -555,8 +570,10 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                     collegecode: student.collegecode || student.programs?.collegecode || null
                 }));
 
-                setAllStudents(studentsWithCollege);
-                setStudents(studentsWithCollege);
+                const sortedStudents = sortByCreatedOnDesc(studentsWithCollege);
+
+                setAllStudents(sortedStudents);
+                setStudents(sortedStudents);
             } catch (err) {
                 console.error('Unexpected error:', err);
             }

@@ -16,10 +16,12 @@
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@fortawesome/react-fontawesome": "^3.1.0",
     "gsap": "^3.13.0",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.553.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.3",
+    "react-snowfall": "^2.4.0",
     "tailwind": "^4.0.0"
   },
   "devDependencies": {

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faSort, faPenToSquare, faTrash, faArrowLeft, faArrowRight, } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faSliders, faSort, faPenToSquare, faTrash, faArrowLeft, faArrowRight, } from "@fortawesome/free-solid-svg-icons";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import supabase from "../../lib/supabaseClient";
 import { getCurrentUser, getCurrentUserId } from "../../lib/auth";
+import Lottie from 'lottie-react';
+import Reindeer from '../../static/images/reindeer.json';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -27,6 +29,9 @@ export default function CollegePage() {
 
     return (
         <div>
+            <div className="reindeer-wrapper absolute">
+                <Lottie animationData={Reindeer} loop autoplay />
+            </div>
             <Navbar />
             <div className="directory-content">
                 <div className="directory-wrapper">
@@ -40,7 +45,7 @@ export default function CollegePage() {
                                 <button className="breadcrumb-button" onClick={() => navigate("/college-page")}>College Directory </button>
                             </span>
                             <span className="breadcrumb-line"></span>
-                            <button className="open-form-button" onClick={toggleForm}>
+                            <button className="open-form-button text-[#fca31c]" onClick={toggleForm}>
                                 {showForm ? 'Close College Form' : 'Open College Form'}
                             </button>
                         </nav>
@@ -67,7 +72,6 @@ export default function CollegePage() {
                     />
                 </div>
             </div>
-            <Footer />
         </div>
     );
 }
@@ -180,34 +184,39 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
 
 
     return (
-        <div className="bg-gray-100 h-full p-10 shadow-md pb-68">
-            <h1 className="font-bold text-4xl mb-5 mt-10"> College Form </h1>
-            <hr />
-            <div className="my-7">
-                <form onSubmit={handleSubmit}>
-                    <label className="font-semibold text-base">College Code:</label>
-                    <br />
-                    <input
-                        type="text"
-                        value={collegeCode}
-                        onChange={(e) => setCollegeCode(e.target.value)}
-                        placeholder="e.g. CCS"
-                        required
-                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
-                    />
-                    <br />
+        <div className="border-l-2">
+            <div className="font-bold text-4xl bg-[#18181b] text-white p-6 py-10 text-center"> 
+                College Form
+                <p className="text-sm dont-thin italic">Add new college</p> 
+            </div>
+            
+            <div className="bg-white p-7">
+                <form onSubmit={handleSubmit} className="flex flex-col">
+                    <label className="font-semibold text-base mb-3">College Information:</label>
 
-                    <label className="font-semibold text-base">College Name:</label>
-                    <br />
-                    <input
-                        type="text"
-                        value={collegeName}
-                        onChange={(e) => setCollegeName(e.target.value)}
-                        placeholder="e.g. College of Computer Studies"
-                        required
-                        className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
-                    />
-                    <br />
+                    <div className="flex flex-row">
+                        <label className="text-[13px] w-1/3">College Code:</label>
+                        <input
+                            type="text"
+                            value={collegeCode}
+                            onChange={(e) => setCollegeCode(e.target.value)}
+                            placeholder="e.g. CCS"
+                            required
+                            className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
+                        />
+                    </div>
+
+                    <div className="flex flex-row">
+                        <label className="text-[13px] w-1/3">College Name:</label>
+                        <input
+                            type="text"
+                            value={collegeName}
+                            onChange={(e) => setCollegeName(e.target.value)}
+                            placeholder="e.g. College of Computer Studies"
+                            required
+                            className="bg-white border-1 border-gray-300 h-8 w-full p-1 mb-3 text-sm"
+                        />
+                    </div>
 
                     <div className="add-button-container">
                         <button type="submit" className="add-college">
@@ -229,9 +238,26 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
     const [sortOrder, setSortOrder] = useState("asc");
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+    const [searchField, setSearchField] = useState('all');
+    // const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
     const indexOfLast = currentPage * rowsPerPage;
     const indexOfFirst = indexOfLast - rowsPerPage;
     const currentColleges = Array.isArray(colleges) ? colleges.slice(indexOfFirst, indexOfLast) : [];
+
+    const getCreatedOnTime = (value) => {
+        if (!value) {
+            return 0;
+        }
+
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+    };
+
+    const sortByCreatedOnDesc = (list) => {
+        return [...(list || [])].sort((a, b) => getCreatedOnTime(b?.created_on) - getCreatedOnTime(a?.created_on));
+    };
 
     // Load colleges
     useEffect(() => {
@@ -247,14 +273,15 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                 const { data, error } = await supabase
                     .from('colleges')
                     .select('*')
-                    .eq('userid', userid);
+                    .eq('userid', userid)
+                    .order('created_on', { ascending: false });
 
                 if (error) {
                     console.error('Error fetching colleges:', error);
                     return;
                 }
 
-                setColleges(data || []);
+                setColleges(sortByCreatedOnDesc(data));
             } catch (err) {
                 console.error('Unexpected error:', err);
             }
@@ -307,7 +334,7 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                 alert("Failed to delete college.");
             } else {
                 alert("College deleted successfully!");
-                setColleges(colleges.filter((c) => c.collegecode !== collegeCode));
+                setColleges((prev) => prev.filter((c) => c.collegecode !== collegeCode));
             }
         } catch (err) {
             console.error("Error deleting college:", err);
@@ -326,13 +353,14 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
             const { data, error } = await supabase
                 .from("colleges")
                 .select("*")
-                .eq("userid", userid);
+                .eq("userid", userid)
+                .order('created_on', { ascending: false });
             
             if (error) {
                 console.error("Error fetching colleges:", error);
                 return;
             }
-            setColleges(data || []);
+            setColleges(sortByCreatedOnDesc(data));
             return;
         }
 
@@ -345,14 +373,15 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                 .from("colleges")
                 .select("*")
                 .eq("userid", userid)
-                .or(`collegecode.ilike.%${keyword}%,collegename.ilike.%${keyword}%`);
+                .or(`collegecode.ilike.%${keyword}%,collegename.ilike.%${keyword}%`)
+                .order('created_on', { ascending: false });
 
             if (error) {
                 console.error("Error searching programs:", error);
                 return;
             }
 
-            setColleges(data || []);
+            setColleges(sortByCreatedOnDesc(data));
         } catch (err) {
             console.error("Error searching colleges:", err);
         }
@@ -362,13 +391,24 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
 
     return (
         <div className="area-main-directory">
-            <div className='flex flex-row justify-between items-center mt-8 mb-10'>
-                <h1 className="font-bold text-4xl">College Directory</h1>
-                <div className='text-sm w-72'>
-                    <div className='border-1 border-gray-300 p-2 flex items-center gap-2 bg-white'>
+            <h1 className="font-bold text-4xl mt-8">College Directory</h1>
+            <div className="flex flex-row items-center mt-5 mb-4 bg-white gap-2">
+                <div className='flex flex-row text-sm h-8'>
+                    <div className='border-[1px] border-gray-400 p-2 flex items-center gap-2 bg-white w-62'>
                         <FontAwesomeIcon icon={faMagnifyingGlass}/>
-                        <input className='w-full focus:outline-none w-full' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
+                        <input className='w-full focus:outline-none h-4 text-[13px] border-none' type='text' placeholder='Type in a keyword or name...' onChange={(e)=>handleSearch(e.target.value)} />
                     </div>
+                </div>
+                <div className='flex gap-2'>
+                    <select 
+                        className='bg-gray-100 px-1 h-8 text-[13px]'
+                        value={searchField}
+                        onChange={(e) => setSearchField(e.target.value)}
+                    >
+                        <option value='all'>All Fields</option>
+                        <option value='collegecode'>College Code</option>
+                        <option value='firstname'>First Name</option>
+                    </select>
                 </div>
             </div>
 
@@ -441,4 +481,93 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
             </div>
         </div>
     );
+}
+
+
+function AdvancedSearch({ collegeCodes, filters, onApply, onClose }) {
+    const [selectedCollegeCode, setSelectedCollegeCode] = useState(filters.collegeCode || '');
+    const [startDate, setStartDate] = useState(filters.startDate || '');
+    const [endDate, setEndDate] = useState(filters.endDate || '');
+
+    useEffect(() => {
+        setSelectedCollegeCode(filters.collegeCode || '');
+        setStartDate(filters.startDate || '');
+        setEndDate(filters.endDate || '');
+    }, [filters]);
+
+    const handleApply = () => {
+        onApply?.({
+            collegeCode: selectedCollegeCode,
+            startDate,
+            endDate,
+        });
+    };
+
+    const handleCancel = () => {
+        const clearedFilters = createEmptyFilters();
+        setSelectedCollegeCode('');
+        setStartDate('');
+        setEndDate('');
+        onApply?.(clearedFilters);
+        onClose?.(true);
+    };
+
+    return (
+        <div className=''>
+            <div className='flex flex-row gap-2'>
+                <div className='border border-gray-300 w-1/2 p-3'>
+                    <p className='text-xs font-semibold mb-2'>Select Fields</p>
+                    <div className='flex gap-2 h-6 text-xs'>
+                        <select 
+                            className='w-1/3 bg-gray-100 px-1'
+                            value={selectedCollegeCode}
+                            onChange={(e) => setSelectedCollegeCode(e.target.value)}
+                        >
+                            <option value="">All Colleges</option>
+                            {collegeCodes.map((p) => (
+                                <option key={p.collegecode} value={p.collegecode}>
+                                    {p.collegecode}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+                <div className='border border-gray-300 p-3 w-1/2'>
+                    <p className='text-xs font-semibold mb-2'>Select Timeframe</p>
+                    <div className='flex gap-2 h-6 text-xs items-center h-6'>
+                        <p className='text-sm text-[#fca31c] font-bold'>College Added: </p>
+                        <input 
+                            type='date' 
+                            className='bg-gray-100 h-6 px-2 w-1/3'
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                        />
+                        -
+                        <input 
+                            type='date' 
+                            className='bg-gray-100 h-6 px-2 w-1/3'
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <div className='flex justify-end mt-2 gap-2'>
+                <button 
+                    className='flex flex-row items-center gap-1 bg-gray-100 p-1 px-3 text-sm hover:bg-gray-200 transition-colors'
+                    onClick={handleCancel}
+                >
+                    <X size={'15'} className='-mt-[1px]'/>
+                    Close
+                </button>
+                <button 
+                    className='bg-[#fca31a] text-white p-1 text-sm px-3 hover:bg-[#e89419] transition-colors'
+                    onClick={handleApply}
+                >
+                    Apply Filter
+                </button>
+            </div>
+        </div>
+    )
 }
