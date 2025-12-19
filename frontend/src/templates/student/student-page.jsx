@@ -45,8 +45,6 @@ export default function StudentPage() {
         }
     }, [location.state]);
 
-
-
     return (
         <div>
             <Navbar />
@@ -101,58 +99,57 @@ export default function StudentPage() {
                             editingStudent={editingStudent}
                         />
                     ) : showStudentDetails ? (
-                        <div className="h-screen w-full bg-gray-100 p-10 overflow-y-auto">
-                            <div className='h-30 w-80 rounded-lg bg-gradient-to-tl from-[#18181b] via-[#1e2b38] to-[#293B4D]'/>
-                            <img 
-                                src={selectedStudent?.studentprofile || "src/static/images/default.jpg"} 
-                                alt="Student" 
-                                className="w-40 h-40 object-cover rounded-full border-8 border-gray-100 mx-auto -mt-20"
-                                onError={(e) => {
-                                    e.target.src = "src/static/images/default.jpg";
-                                }}
-                            />
-
-                            <h1 className='text-center text-[#FCA311] font-black text-2xl leading-none mb-1 mt-3'>{selectedStudent?.firstname} {selectedStudent?.lastname}  </h1>
-                            <h1 className='text-center text-md text-black leading-none'>{selectedStudent?.programcode}</h1>
-                            <h1 className='text-center text-sm text-black mb-5 leading-none font-semibold'>{selectedStudent?.collegecode || "N/A"}</h1>
-                            
-                            <div className='bg-white p-6 border-[1px] border-gray-200 mb-4'>
-                                <h1 className='flex flex-row mb-4 items-center font-bold text-base gap-2'>
-                                    <SquareUser size={"20"} strokeWidth={'2'}/>
-                                    Personal Details
-                                </h1>
+                        <div className="h-screen w-full border-l-2 border-[#18181b] overflow-y-auto">
+                            <div className='h-35 bg-[#18181b]'/>
+                            <div className='p-10'>
+                                <img
+                                    src={selectedStudent?.studentprofile || "src/static/images/default.jpg"}
+                                    alt="Student"
+                                    className="w-40 h-40 object-cover rounded-full border-7 border-white mx-auto -mt-30"
+                                    onError={(e) => {
+                                        e.target.src = "src/static/images/default.jpg";
+                                    }}
+                                />
+                                <h1 className='text-center text-[#FCA311] font-black text-2xl leading-none mt-3'>{selectedStudent?.firstname} {selectedStudent?.lastname}  </h1>
+                                <h1 className='text-center text-med text-black mb-5'>{selectedStudent?.collegecode||"N/A"}-{selectedStudent?.programcode}</h1>
                                 
-                                <div className="flex flex-row text-sm gap-4">
-                                    <div className='text-gray-600 w-1/3'>
-                                        <h1>ID Number: </h1>
-                                        <h1>First Name: </h1>
-                                        <h1>Last Name: </h1>
-                                        <h1>Sex: </h1>
-                                        <h1>Year Level:</h1>
-                                        <h1>College:</h1>
-                                        <h1>Program:</h1>
-                                    </div>
-                                    {/* area to populate */}
-                                    <div>
-                                        <h1>{selectedStudent?.idnum || 'N/A'}</h1>
-                                        <h1>{selectedStudent?.firstname || 'N/A'}</h1>
-                                        <h1>{selectedStudent?.lastname || 'N/A'}</h1>
-                                        <h1>{selectedStudent?.sex || 'N/A'}</h1>
-                                        <h1>{selectedStudent?.yearlevel || 'N/A'}</h1>
-                                        <h1>{selectedStudent?.collegecode || 'N/A'}</h1>
-                                        <h1>{selectedStudent?.programcode || 'N/A'}</h1>
+                                <div className='bg-white p-6 rounded-lg border-[1px] border-gray-200 mb-4'>
+                                    <h1 className='flex flex-row mb-4 items-center font-bold text-base gap-2'>
+                                        <SquareUser size={"20"} strokeWidth={'2'}/>
+                                        Personal Details
+                                    </h1>
+                                
+                                    <div className="flex flex-row text-sm gap-4">
+                                        <div className='text-gray-600 w-1/3'>
+                                            <h1>ID Number: </h1>
+                                            <h1>First Name: </h1>
+                                            <h1>Last Name: </h1>
+                                            <h1>Sex: </h1>
+                                            <h1>Year Level:</h1>
+                                            <h1>College:</h1>
+                                            <h1>Program:</h1>
+                                        </div>
+                                        {/* area to populate */}
+                                        <div>
+                                            <h1>{selectedStudent?.idnum || 'N/A'}</h1>
+                                            <h1>{selectedStudent?.firstname || 'N/A'}</h1>
+                                            <h1>{selectedStudent?.lastname || 'N/A'}</h1>
+                                            <h1>{selectedStudent?.sex || 'N/A'}</h1>
+                                            <h1>{selectedStudent?.yearlevel || 'N/A'}</h1>
+                                            <h1>{selectedStudent?.collegecode || 'N/A'}</h1>
+                                            <h1>{selectedStudent?.programcode || 'N/A'}</h1>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className='bg-white p-6 border-[1px] border-gray-200'>
-                                <h1 className='flex flex-row mb-2 font-semibold text-base gap-2 items-center'>
-                                    <CalendarClock size={"20"} strokeWidth={'2'}/>
-                                    History
-                                </h1>
-                                <div className="flex flex-row text-sm">
-                                    <div>
-                                        <h1>Added on {selectedStudent?.created_on ? new Date(selectedStudent.created_on).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</h1>
+                                <div className='bg-white p-6 rounded-lg border-[1px] border-gray-200'>
+                                    <h1 className='flex flex-row mb-2 font-semibold text-base gap-2 items-center'>
+                                        <CalendarClock size={"20"} strokeWidth={'2'}/>
+                                        History
+                                    </h1>
+                                    <div className="flex flex-row text-sm">
+                                        <div>
+                                            <h1>Added on {selectedStudent?.created_on ? new Date(selectedStudent.created_on).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</h1>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -511,19 +508,6 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
     const [searchField, setSearchField] = useState('all');
     const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
 
-    const getCreatedOnTime = (value) => {
-        if (!value) {
-            return 0;
-        }
-
-        const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
-    };
-
-    const sortByCreatedOnDesc = (list) => {
-        return [...(list || [])].sort((a, b) => getCreatedOnTime(b?.created_on) - getCreatedOnTime(a?.created_on));
-    };
-
     //for pagination
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
@@ -556,8 +540,7 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                 const { data, error } = await supabase
                     .from('students')
                     .select('*, programs(collegecode)')
-                    .eq('userid', userid)
-                    .order('created_on', { ascending: false });
+                    .eq('userid', userid);
 
                 if (error) {
                     console.error('Error fetching students:', error);
@@ -570,10 +553,8 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                     collegecode: student.collegecode || student.programs?.collegecode || null
                 }));
 
-                const sortedStudents = sortByCreatedOnDesc(studentsWithCollege);
-
-                setAllStudents(sortedStudents);
-                setStudents(sortedStudents);
+                setAllStudents(studentsWithCollege);
+                setStudents(studentsWithCollege);
             } catch (err) {
                 console.error('Unexpected error:', err);
             }
@@ -847,6 +828,7 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                     <FontAwesomeIcon icon={faSliders} size='lg' color='white' className='mr-1 scale-80'/> 
                     Advanced Search
                 </button>
+
             </div>
 
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
@@ -1022,8 +1004,8 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
                 <div className='border border-gray-300 w-1/2 p-3'>
                     <p className='text-xs font-semibold mb-2'>Select Fields</p>
                     <div className='flex gap-2 h-6 text-xs'>
-                        <select 
-                            className='w-1/3 bg-gray-100 px-1'
+                            <select 
+                                className='w-1/3 bg-gray-100 px-1'
                             value={selectedSex}
                             onChange={(e) => setSelectedSex(e.target.value)}
                         >
@@ -1031,8 +1013,8 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
                             <option value="Female">Female</option>
                             <option value="Male">Male</option>
                         </select>
-                        <select 
-                            className='w-1/3 bg-gray-100 px-1'
+                            <select 
+                                className='w-1/3 bg-gray-100 px-1'
                             value={selectedYearLevel}
                             onChange={(e) => setSelectedYearLevel(e.target.value)}
                         >
@@ -1042,8 +1024,8 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
                             <option value="3">3</option>
                             <option value="4">4</option>
                         </select>
-                        <select 
-                            className='w-1/3 bg-gray-100 px-1'
+                            <select 
+                                className='w-1/3 bg-gray-100 px-1'
                             value={selectedProgram}
                             onChange={(e) => setSelectedProgram(e.target.value)}
                         >
@@ -1083,7 +1065,7 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
                     onClick={handleCancel}
                 >
                     <X size={'15'} className='-mt-[1px]'/>
-                    Close
+                    Clear
                 </button>
                 <button 
                     className='bg-[#fca31a] text-white p-1 text-sm px-3 hover:bg-[#e89419] transition-colors'

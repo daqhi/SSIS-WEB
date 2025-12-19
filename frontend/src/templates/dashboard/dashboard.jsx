@@ -113,7 +113,7 @@ export default function Dashboard() {
                             <GradientText
                                 colors={["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"]}
                                 animationSpeed={3}
-                                snowflakeCount={120}
+                                snowflakeCount={10}
                                 showBorder={false}
                                 >
                                 Welcome to your dashboard, {username}!

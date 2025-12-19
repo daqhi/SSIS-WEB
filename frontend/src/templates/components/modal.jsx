@@ -1,5 +1,5 @@
 import React from "react";
-import { X } from "lucide-react";
+import { X, CircleAlert, TriangleAlert } from "lucide-react";
 
 /**
  * Universal Modal Component
@@ -14,6 +14,8 @@ import { X } from "lucide-react";
  * @param {React.ReactNode} footer - Optional footer content (buttons, actions, etc.)
  * @param {string} size - Modal size: 'sm', 'md', 'lg', 'xl' (default: 'md')
  */
+
+
 function Modal({
     isOpen,
     onClose,
@@ -42,19 +44,27 @@ function Modal({
 
     const typeColors = {
         default: "bg-gray-100 border-gray-300",
-        info: "bg-blue-50 border-blue-300",
-        success: "bg-green-50 border-green-300",
-        warning: "bg-yellow-50 border-yellow-300",
-        error: "bg-red-50 border-red-300"
+        info: "bg-gray-100 border-gray-300",
+        success:"bg-gray-100 border-gray-300",
+        warning: "bg-gray-100 border-gray-300",
+        error: "bg-gray-100 border-gray-300",
     };
 
     const headerColors = {
         default: "bg-gray-200 text-gray-800",
-        info: "bg-blue-200 text-blue-800",
-        success: "bg-green-200 text-green-800",
-        warning: "bg-yellow-200 text-yellow-800",
-        error: "bg-red-200 text-red-800"
+        info: "bg-gray-200 text-gray-800",
+        success: "bg-gray-200 text-gray-800",
+        warning: "bg-gray-200 text-gray-800",
+        error: "bg-gray-200 text-gray-800",
     };
+
+    const headerIcons = {
+        default: null,
+        info: <X size={20} color="#2563EB" />,
+        success: <X size={20} color="#16A34A" />,
+        warning: <TriangleAlert size={20} color="#DC2626" />,
+        error: <X size={20} color="#DC2626" />
+    }
 
     return (
         <div 
@@ -65,15 +75,18 @@ function Modal({
                 className={`relative w-full ${sizeClasses[size]} mx-4 bg-white shadow-2xl border-[1px] ${typeColors[type]} animate-fadeIn`}
             >
                 {/* Header */}
-                <div className={`flex items-center justify-between px-6 py-4 ${headerColors[type]}`}>
-                    <h2 className="text-xl font-bold">{title}</h2>
+                <div className={`flex items-center justify-between px-4 py-2 ${headerColors[type]}`}>
+                    <div className="flex items-center gap-3">
+                        {headerIcons[type]}
+                        <h2 className="text-md font-bold">{title}</h2>
+                    </div>
                     {showCloseButton && (
                         <button
                             onClick={onClose}
                             className="p-1 hover:bg-white hover:bg-opacity-20 transition-colors"
                             aria-label="Close modal"
                         >
-                            <X size={24} />
+                            <X size={20} />
                         </button>
                     )}
                 </div>
@@ -85,7 +98,7 @@ function Modal({
 
                 {/* Footer */}
                 {footer && (
-                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                    <div className="px-4 py-2 bg-gray-50 border-gray-200">
                         {footer}
                     </div>
                 )}

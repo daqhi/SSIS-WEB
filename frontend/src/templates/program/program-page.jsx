@@ -37,7 +37,7 @@ export default function ProgramPage() {
     return(
         <div>
             <Navbar />
-            <div className='directory-content'>
+            <div className='flex flex-row min-h-screen w-full'>
                 <div className="directory-wrapper ">
                     <div className="breadcrumb-container">
                         <nav className="breadcrumb">
@@ -75,6 +75,7 @@ export default function ProgramPage() {
                     />
                 </div>
             </div>
+            <Footer />
         </div>
     )
 }
@@ -216,7 +217,7 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
 
 
     return (
-        <div className='block border-l-2 h-full'>
+        <div className='border-l-2 h-auto flex flex-col'>
             <div className='font-bold text-4xl bg-[#18181b] text-white p-6 py-10 text-center'>
                 Program Form
                 <p className='text-sm font-thin italic'>Add new program here</p>
@@ -722,7 +723,7 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
                     onClick={handleCancel}
                 >
                     <X size={'15'} className='-mt-[1px]'/>
-                    Close
+                    Clear
                 </button>
                 <button 
                     className='bg-[#fca31a] text-white p-1 text-sm px-3 hover:bg-[#e89419] transition-colors'

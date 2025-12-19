@@ -6,8 +6,6 @@ import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import supabase from "../../lib/supabaseClient";
 import { getCurrentUser, getCurrentUserId } from "../../lib/auth";
-import Lottie from 'lottie-react';
-import Reindeer from '../../static/images/reindeer.json';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -28,12 +26,9 @@ export default function CollegePage() {
     }, [location.state]);
 
     return (
-        <div>
-            <div className="reindeer-wrapper absolute">
-                <Lottie animationData={Reindeer} loop autoplay />
-            </div>
+        <div >
             <Navbar />
-            <div className="directory-content">
+            <div className="flex flex-row min-h-screen w-full">
                 <div className="directory-wrapper">
                     <div className="breadcrumb-container">
                         <nav className="breadcrumb">
@@ -72,6 +67,7 @@ export default function CollegePage() {
                     />
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }
@@ -184,13 +180,13 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
 
 
     return (
-        <div className="border-l-2">
+        <div className="border-l-2 h-full flex flex-col">
             <div className="font-bold text-4xl bg-[#18181b] text-white p-6 py-10 text-center"> 
                 College Form
                 <p className="text-sm dont-thin italic">Add new college</p> 
             </div>
             
-            <div className="bg-white p-7">
+            <div className="bg-white p-7 flex-1 overflow-y-auto">
                 <form onSubmit={handleSubmit} className="flex flex-col">
                     <label className="font-semibold text-base mb-3">College Information:</label>
 
@@ -481,93 +477,4 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
             </div>
         </div>
     );
-}
-
-
-function AdvancedSearch({ collegeCodes, filters, onApply, onClose }) {
-    const [selectedCollegeCode, setSelectedCollegeCode] = useState(filters.collegeCode || '');
-    const [startDate, setStartDate] = useState(filters.startDate || '');
-    const [endDate, setEndDate] = useState(filters.endDate || '');
-
-    useEffect(() => {
-        setSelectedCollegeCode(filters.collegeCode || '');
-        setStartDate(filters.startDate || '');
-        setEndDate(filters.endDate || '');
-    }, [filters]);
-
-    const handleApply = () => {
-        onApply?.({
-            collegeCode: selectedCollegeCode,
-            startDate,
-            endDate,
-        });
-    };
-
-    const handleCancel = () => {
-        const clearedFilters = createEmptyFilters();
-        setSelectedCollegeCode('');
-        setStartDate('');
-        setEndDate('');
-        onApply?.(clearedFilters);
-        onClose?.(true);
-    };
-
-    return (
-        <div className=''>
-            <div className='flex flex-row gap-2'>
-                <div className='border border-gray-300 w-1/2 p-3'>
-                    <p className='text-xs font-semibold mb-2'>Select Fields</p>
-                    <div className='flex gap-2 h-6 text-xs'>
-                        <select 
-                            className='w-1/3 bg-gray-100 px-1'
-                            value={selectedCollegeCode}
-                            onChange={(e) => setSelectedCollegeCode(e.target.value)}
-                        >
-                            <option value="">All Colleges</option>
-                            {collegeCodes.map((p) => (
-                                <option key={p.collegecode} value={p.collegecode}>
-                                    {p.collegecode}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-                <div className='border border-gray-300 p-3 w-1/2'>
-                    <p className='text-xs font-semibold mb-2'>Select Timeframe</p>
-                    <div className='flex gap-2 h-6 text-xs items-center h-6'>
-                        <p className='text-sm text-[#fca31c] font-bold'>College Added: </p>
-                        <input 
-                            type='date' 
-                            className='bg-gray-100 h-6 px-2 w-1/3'
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                        />
-                        -
-                        <input 
-                            type='date' 
-                            className='bg-gray-100 h-6 px-2 w-1/3'
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                        />
-                    </div>
-                </div>
-            </div>
-            
-            <div className='flex justify-end mt-2 gap-2'>
-                <button 
-                    className='flex flex-row items-center gap-1 bg-gray-100 p-1 px-3 text-sm hover:bg-gray-200 transition-colors'
-                    onClick={handleCancel}
-                >
-                    <X size={'15'} className='-mt-[1px]'/>
-                    Close
-                </button>
-                <button 
-                    className='bg-[#fca31a] text-white p-1 text-sm px-3 hover:bg-[#e89419] transition-colors'
-                    onClick={handleApply}
-                >
-                    Apply Filter
-                </button>
-            </div>
-        </div>
-    )
 }

@@ -345,11 +345,6 @@ body {
     height: auto;
 }
 
-.form-wrapper > * {
-    flex: 1;
-    min-height: 100%;
-}
-
 
 
 
@@ -382,7 +377,7 @@ body {
     cursor: pointer;
     width: 300px;
 }
-        
+
 .add-student:hover {
     background-color: #ffb53e;
     box-shadow: #aaa 0px 0px 5px;
@@ -425,18 +420,3 @@ body {
 
 
 
-
-
-/* REINDEER */
-.reindeer-wrapper {
-  bottom: 527px;
-  left: 1200px;
-  width: 180px;
-  pointer-events: none;
-}
-
-.reindeer-wrapper canvas,
-.reindeer-wrapper svg {
-  width: 100%;
-  height: auto;
-}
