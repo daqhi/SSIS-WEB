@@ -15,7 +15,10 @@ import GradientText from '../components/shiny-text.jsx';
 import { MoveRight } from "lucide-react";
 import Footer from '../components/footer.jsx';
 import supabase from "../../lib/supabaseClient.js";
-import { getCurrentUserId } from "../../lib/auth.js";
+import { getCurrentUserId, getCurrentUser } from "../../lib/auth.js";
+import Reindeer from '../../static/images/reindeer.json';
+import Lottie from 'lottie-react';
+import Snowfall from 'react-snowfall';
 
 
 export default function Dashboard() {
@@ -23,6 +26,12 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [counts, setCounts] = useState({ overall: { Colleges: '...', Programs: '...', Students: '...' } });
+    const [username, setUsername] = useState("");
+
+    useEffect(() => {
+        // Fetch user data on component mount
+        setUsername(getCurrentUser()?.username || "Guest");
+    }, []);
 
     const cards = [
         { icon: faBuildingColumns, key: "Colleges", navigate: "/college-page", label: "Total Colleges", gradient:"from-[#18181b] to-[#1e2b38] to-[#293B4D]" },
@@ -89,18 +98,38 @@ export default function Dashboard() {
             <Navbar />
             <div className="mx-20 my-7">
                 {/* HEADER */}
-                <div className='leading-15 p-8 pt-10 bg-gradient-to-r from-[#18181b] via-[#18181b] to-[#1e2b38] flex flex-col mx-5'>
-                    <div>
-                        <GradientText
-                            colors={["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"]}
-                            animationSpeed={7}
-                            showBorder={false}
-                            >
-                            Welcome to your dashboard, user!
-                        </GradientText>
+                <div className='bg-gradient-to-r from-[#18181b] via-[#18181b] to-[#1e2b38] flex flex-row mx-5 justify-between items-stretch relative'>
+                    <Snowfall
+                        color="#cdcdcd"
+                        animationSpeed={3}
+                        snowflakeCount={120}
+                        style={{
+                            filter: 'blur(4px)',
+                            pointerEvents: 'none',
+                        }}
+                    />
+                    <div className='leading-15 pl-8 py-10 flex flex-col justify-center w-3/4'>
+                        <div>
+                            <GradientText
+                                colors={["#40ffaa", "#4079ff", "#40ffaa", "#4079ff", "#40ffaa"]}
+                                animationSpeed={3}
+                                snowflakeCount={120}
+                                showBorder={false}
+                                >
+                                Welcome to your dashboard, {username}!
+                            </GradientText>
+                        </div>
+                        <div>
+                            <h3 className="mx-3 mt-3 text-gray-200 pb-4 leading-none">Manage, track, and simplify your academic data in one place.  </h3>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="mx-3 mt-3 text-gray-200 pb-4 leading-none">Manage, track, and simplify your academic data in one place.  </h3>
+                    <div className="mr-10 relative flex-1 flex items-end">
+                        <Lottie
+                            animationData={Reindeer}
+                            loop
+                            autoplay
+                            className="w-48 h-48 absolute bottom-0 right-0"
+                        />
                     </div>
                 </div>
 
@@ -212,7 +241,7 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
-            {/* <Footer /> */}
+            <Footer />
         </div>
     )
 }

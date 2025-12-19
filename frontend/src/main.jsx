@@ -31,6 +31,7 @@ const router = createBrowserRouter([
         path: '/dashboard', 
         element: (
             <ProtectedRoute>
+                <Snowfall color="#CBCBCB " />
                 <Dashboard />
             </ProtectedRoute>
         ) 

@@ -202,33 +202,6 @@ body {
     background-image: none;   /* remove extra arrow in some browsers */
 }
 
-/* Icon inside the select */
-/* .function-item .dropdown-icon {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: #878787;
-    font-size: 14px;
-    height: 10px;
-    padding:0;
-}
-
-.function-item button {
-    font-family: 'Montserrat';
-    width: 80px;
-    height: 27px;
-    font-size: inherit;
-    font-weight: 600    ;
-    color: #ffffff;
-    padding: 5px 5px 5px 5px; 
-    margin: 5px 0 0 0;
-    border: 0px solid #FCA311;
-    background: #FCA311;
-
-}
-
 
 
 
@@ -352,14 +325,16 @@ body {
     max-width: 0;
     overflow: hidden;
     opacity: 0;
-    height: auto;
     transform: translateX(50px);
     transition: max-width 0.4s ease, opacity 0.3s ease, transform 0.4s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .form-wrapper.open {
     max-width: 400px;  /* final width */
     opacity: 1;
+    height: auto;
     transform: translateX(0);
 }
 
@@ -370,6 +345,10 @@ body {
     height: auto;
 }
 
+.form-wrapper > * {
+    flex: 1;
+    min-height: 100%;
+}
 
 
 
@@ -448,14 +427,10 @@ body {
 
 
 
-
-
-
 /* REINDEER */
 .reindeer-wrapper {
-  position: absolute;
-  bottom: 0px;
-  left: 20px;
+  bottom: 527px;
+  left: 1200px;
   width: 180px;
   pointer-events: none;
 }
