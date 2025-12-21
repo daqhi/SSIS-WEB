@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { getCurrentUserId } from "../../lib/auth";
 import { uploadToCloudinary } from '../../lib/cloudinary';
-import { set } from '@cloudinary/url-gen/actions/variable';
 import { faPlus, faMagnifyingGlass, faSort, faPenToSquare, faTrash, faBars, faArrowLeft, faArrowRight, faUser, faSliders } from "@fortawesome/free-solid-svg-icons";
 import { CalendarClock, PersonStanding, SquareUser, User, X } from 'lucide-react';
 import '../../static/css/pages.css'
@@ -11,6 +10,8 @@ import Navbar from "../components/navbar"
 import Footer from "../components/footer"
 import supabase from "../../lib/supabaseClient";
 import Modal, { AlertModal, ConfirmModal } from '../components/modal';
+import Lottie from 'lottie-react';
+import MeteorShower from '../../static/images/Falling Meteor.json';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
@@ -30,7 +31,6 @@ export default function StudentPage() {
     const [refreshKey, setRefreshKey] = useState(0)
     const [showForm, setShowForm] = useState(false)
     const [showStudentDetails, setShowStudentDetails] = useState(false)
-    const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
 
     const toggleForm = () => {
         setShowForm(!showForm)
@@ -93,8 +93,11 @@ export default function StudentPage() {
                             onStudentAdded={() => setRefreshKey((prev) => prev + 1)}
                             onStudentUpdated={() => {
                                 setRefreshKey((prev) => prev + 1);
-                                setEditingStudent(null);
-                                setShowForm(false);
+                                // Keep form mounted briefly so the update toast can show
+                                setTimeout(() => {
+                                    setEditingStudent(null);
+                                    setShowForm(false);
+                                }, 3000);
                             }}
                             editingStudent={editingStudent}
                         />
@@ -148,7 +151,7 @@ export default function StudentPage() {
                                     </h1>
                                     <div className="flex flex-row text-sm">
                                         <div>
-                                            <h1>Added on {selectedStudent?.created_on ? new Date(selectedStudent.created_on).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</h1>
+                                            <h1>Added on {selectedStudent?.created_on ? new Date(selectedStudent.created_on).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</h1>
                                         </div>
                                     </div>
                                 </div>
@@ -175,6 +178,12 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
     const [college, setCollege] = useState("");
     const [programs, setPrograms] = useState([])
     const [isLoading, setIsLoading] = useState(false);
+    const [toastMessage, setToastMessage] = useState("");
+    const [showToast, setShowToast] = useState(false);
+    const photoInputRef = useRef(null);
+    const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+    const [pendingPayload, setPendingPayload] = useState(null);
+    const [showAddConfirm, setShowAddConfirm] = useState(false);
 
     useEffect(() => {
         if (editingStudent) {
@@ -259,21 +268,15 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
         }
 
         if (!idNum.match(/^\d{4}-\d{4}$/)) {
-            alert("ID Number must be in the format YYYY-NNNN.");
+            setToastMessage('ID Number must be in the format YYYY-NNNN.');
+            setShowToast(true);
             setIsLoading(false);
             return;
         } else if (!idNum || !firstName || !lastName || !sex || !yearLevel || !program) {
-            alert("All fields are required!");
+            setToastMessage('Please fill in all required fields.');
+            setShowToast(true);
             setIsLoading(false);
             return;
-        } 
-
-        if (editingStudent) {
-            const confirmed = window.confirm("Are you sure you want to update this student's information?");
-            if (!confirmed) {
-                setIsLoading(false);
-                return; // stop if user cancels
-            }
         }
 
         const payload = {
@@ -286,7 +289,6 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             programcode: program === "None" ? null : program,
             collegecode: college || null,
         };
-
         const userid = getCurrentUserId();
         if (!userid) {
             alert('You must be logged in to add/edit students.');
@@ -297,47 +299,46 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
         // Add userid to payload
         payload.userid = userid;
 
+        // If editing, open update confirmation modal and wait for user action
+        if (editingStudent) {
+            setPendingPayload(payload);
+            setShowUpdateConfirm(true);
+            setIsLoading(false);
+            return;
+        }
+
+        // If adding, open add confirmation modal and wait for user action
+        setPendingPayload(payload);
+        setShowAddConfirm(true);
+        setIsLoading(false);
+    }
+
+    async function handleConfirmAdd() {
+        if (!pendingPayload) {
+            setShowAddConfirm(false);
+            return;
+        }
+
+        setIsLoading(true);
         try {
-            if (editingStudent) {
-                // Update existing student in Supabase
-                const { error } = await supabase
-                    .from('students')
-                    .update({
-                        studentprofile: photoFile,
-                        firstname: firstName,
-                        lastname: lastName,
-                        sex: sex,
-                        yearlevel: yearLevel,
-                        programcode: program === "None" ? null : program,
-                        collegecode: college || null
-                    })
-                    .eq('idnum', editingStudent.idnum)
-                    .eq('userid', userid);
+            const { error } = await supabase
+                .from('students')
+                .insert([pendingPayload]);
 
-                if (error) {
-                    console.error('Error updating student:', error);
-                    throw new Error(error.message);
-                }
-
-                alert('Student updated successfully!');
-                onStudentUpdated?.();
-            } else {
-                // Add new student to Supabase
-                const { error } = await supabase
-                    .from('students')
-                    .insert([payload]);
-
-                if (error) {
-                    console.error('Error adding student:', error);
-                    throw new Error(error.message);
-                }
-
-                alert('Student added successfully!');
-                onStudentAdded?.();
+            if (error) {
+                console.error('Error adding student:', error);
+                throw new Error(error.message);
             }
+
+            setToastMessage('Student submitted successfully!');
+            setShowToast(true);
+            onStudentAdded?.();
 
             // clear form
             setPhotoFile(null);
+            if (photoInputRef.current) {
+                photoInputRef.current.value = '';
+            }
             setIdNum("");
             setFirstName("");
             setLastName("");
@@ -346,15 +347,76 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
             setProgram("");
             setCollege("");
         } catch (err) {
-            console.error("Error submitting form:", err);
-            alert("Something went wrong: " + err.message);
+            console.error('Error adding student:', err);
+            alert('Something went wrong: ' + err.message);
         } finally {
             setIsLoading(false);
+            setPendingPayload(null);
+            setShowAddConfirm(false);
+        }
+    }
+
+    async function handleConfirmUpdate() {
+        if (!pendingPayload || !editingStudent) {
+            setShowUpdateConfirm(false);
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const { error } = await supabase
+                .from('students')
+                .update({
+                    studentprofile: pendingPayload.studentprofile,
+                    firstname: pendingPayload.firstname,
+                    lastname: pendingPayload.lastname,
+                    sex: pendingPayload.sex,
+                    yearlevel: pendingPayload.yearlevel,
+                    programcode: pendingPayload.programcode,
+                    collegecode: pendingPayload.collegecode
+                })
+                .eq('idnum', editingStudent.idnum)
+                .eq('userid', pendingPayload.userid);
+
+            if (error) {
+                console.error('Error updating student:', error);
+                throw new Error(error.message);
+            }
+
+            setToastMessage('Student submitted successfully!');
+            setShowToast(true);
+            onStudentUpdated?.();
+
+            // clear form
+            setPhotoFile(null);
+            if (photoInputRef.current) {
+                photoInputRef.current.value = '';
+            }
+            setIdNum("");
+            setFirstName("");
+            setLastName("");
+            setSex("");
+            setYearLevel("");
+            setProgram("");
+            setCollege("");
+        } catch (err) {
+            console.error('Error updating student:', err);
+            alert('Something went wrong: ' + err.message);
+        } finally {
+            setIsLoading(false);
+            setPendingPayload(null);
+            setShowUpdateConfirm(false);
         }
     }
 
     return (
-        <div className='border-l-2 h-full'>
+        <div className='border-l-2 h-full shadow-[-10px_0px_15px_rgba(10,10,10,0.7)]'>
+            <Lottie
+                animationData={MeteorShower}
+                loop
+                autoplay
+                className="absolute pointer-events-none -mt-21 opacity-50"
+            />
             <div className='font-bold text-4xl bg-[#18181b] text-white p-6 py-10 text-center'>
                 Student Form
                 <p className='text-sm font-thin italic'>Add new student here</p>
@@ -369,12 +431,14 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                         <input
                             type='file'
                             accept='image/*'
+                            ref={photoInputRef}
                             onChange={(e) => {
                                 const file = e.target.files[0];
                                 if (file) {
                                     const maxSize = 5 * 1024 * 1024; // 5MB in bytes
                                     if (file.size > maxSize) {
-                                        alert('File size exceeds 5MB. Please upload a smaller file.');
+                                        setToastMessage('File size exceeds 5MB. Please upload a smaller file.');
+                                        setShowToast(true);
                                         e.target.value = ''; // for clearing the input
                                         setPhotoFile(null);
                                     } else {
@@ -383,7 +447,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                                 }
                             }}
                             disabled={!!editingStudent}
-                            className="bg-white border-1 border-gray-300 w-full text-gray-500 p-1 mb-3 text-sm"
+                            className="bg-white border-1 border-gray-300 w-full p-1 mb-3 text-sm"
                         />
                     </div>
                     
@@ -408,7 +472,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                             type="text"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
-                            placeholder='Enter first name'
+                            placeholder='Enter First Name'
                             required
                             className="bg-white border-1 border-gray-300 h-8 w-full p-2 text-sm mb-2"
                         />
@@ -420,7 +484,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                             type="text"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
-                            placeholder='Enter last name'
+                            placeholder='Enter Last Name'
                             required
                             className="bg-white border-1 border-gray-300 h-8 w-full p-2 text-sm mb-2"
                         />
@@ -432,9 +496,9 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                             value={sex}
                             onChange={(e) => setSex(e.target.value)}
                             required
-                            className="border-[1px] border-gray-300 bg-white w-full h-8 p-1 text-sm text-gray-500 mb-3"
+                            className="border-[1px] border-gray-300 bg-white w-full h-8 p-1 text-sm mb-3"
                         >
-                            <option value="">Select sex</option>
+                            <option className='text-gray-500' value="">Select Sex</option>
                             <option value="Female">Female</option>
                             <option value="Male">Male</option>
                         </select>
@@ -448,9 +512,9 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                             value={yearLevel}
                             onChange={(e) => setYearLevel(e.target.value)}
                             required
-                            className="border-[1px] border-gray-300 bg-white w-full h-8 p-1 text-sm text-gray-500 pr-8 mb-2"
+                            className="border-[1px] border-gray-300 bg-white w-full h-8 p-1 text-sm pr-8 mb-2"
                         >
-                            <option value="">Select year level</option>
+                            <option className='text-gray-500' value="">Select Year Level</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value='3'>3</option>
@@ -464,9 +528,9 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                             value={program || "None"}
                             onChange={(e) => setProgram(e.target.value)}
                             required
-                            className="border-[1px] border-gray-300 bg-white w-full h-8 p-1 text-sm text-gray-500 pr-8"
+                            className="border-[1px] border-gray-300 bg-white w-full h-8 p-1 text-sm pr-8"
                         >
-                            <option value="">Select Program</option>
+                            <option className='text-gray-500' value="">Select Program</option>
                             {programs.map((p) => (
                                 <option key={p.programcode} value={p.programcode}>
                                     {p.programcode}
@@ -487,12 +551,46 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                     </div>
                 </form>
             </div>
+
+            {showAddConfirm && (
+                <ConfirmModal
+                    isOpen={showAddConfirm}
+                    onClose={() => {
+                        setShowAddConfirm(false);
+                        setPendingPayload(null);
+                    }}
+                    onConfirm={handleConfirmAdd}
+                    title="Confirm Add"
+                    message={`Are you sure you want to add this student?`}
+                    confirmText="Add"
+                    cancelText="Cancel"
+                />
+            )}
+
+            {showUpdateConfirm && (
+                <ConfirmModal
+                    isOpen={showUpdateConfirm}
+                    onClose={() => {
+                        setShowUpdateConfirm(false);
+                        setPendingPayload(null);
+                    }}
+                    onConfirm={handleConfirmUpdate}
+                    title="Confirm Update"
+                    message={`Are you sure you want to update this student's information?`}
+                    confirmText="Update"
+                    cancelText="Cancel"
+                />
+            )}
+
+            {showToast && (
+                <Toast 
+                    message={toastMessage} 
+                    onClose={() => setShowToast(false)}
+                />
+            )}
         </div>
     )
 }
-
-
-
 
 
 
@@ -705,7 +803,6 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                 return;
             }
 
-            alert('Student deleted successfully!');
             setAllStudents((prev) => prev.filter((s) => s.idnum !== idNum));
             setStudents((prev) => prev.filter((s) => s.idnum !== idNum));
         } catch (err) {
@@ -968,6 +1065,7 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
     const [selectedProgram, setSelectedProgram] = useState(filters.program || '');
     const [startDate, setStartDate] = useState(filters.startDate || '');
     const [endDate, setEndDate] = useState(filters.endDate || '');
+    const [sortAscending, setSortAscending] = useState(true);
 
     useEffect(() => {
         setSelectedSex(filters.sex || '');
@@ -1041,7 +1139,7 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
                 <div className='border border-gray-300 p-3 w-1/2'>
                     <p className='text-xs font-semibold mb-2'>Select Timeframe</p>
                     <div className='flex gap-2 h-6 text-xs items-center h-6'>
-                        <p className='text-sm text-[#fca31c] font-bold'>Students Added: </p>
+                        <p className='text-sm text-[#fca31c] font-bold leading-none'>Students Added: </p>
                         <input 
                             type='date' 
                             className='bg-gray-100 h-6 px-2 w-1/3'
@@ -1057,6 +1155,31 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
                         />
                     </div>
                 </div>
+                {/* <div className='border border-gray-300 p-3 w-1/3'>
+                    <p className='text-xs font-semibold mb-2'>Sort By</p>
+                    <div className='flex gap-2 h-6 text-xs items-center justify-between h-6'>
+                        <select 
+                            className='bg-gray-100 px-1 h-8 text-[13px] w-1/2'
+                        >
+                            <option value='all'>All Fields</option>
+                            <option value='createdon'>Created On</option>
+                            <option value='idnum'>ID Number</option>
+                            <option value='firstname'>First Name</option>
+                            <option value='lastname'>Last Name</option>
+                            <option value='sex'>Sex</option>
+                            <option value='yearlevel'>Year Level</option>
+                            <option value='program'>Program</option>
+                        </select>
+                        <label className="flex flex-row gap-1 items-center switch">
+                            <p className='text-sm text-[#fca31c] font-bold leading-none'>Ascending:</p>
+                            <input 
+                                type="checkbox" 
+                                checked={sortAscending} 
+                                onChange={() => setSortAscending(prev => !prev)}
+                            />
+                        </label>
+                    </div>
+                </div> */}
             </div>
             
             <div className='flex justify-end mt-2 gap-2'>
@@ -1077,3 +1200,22 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
         </div>
     )
 }
+
+
+function Toast({ message, onClose }) {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onClose();
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [onClose]);
+
+    return (
+        <div className="fixed bottom-4 right-4 bg-[#18181b] text-white max-w-[300px] font-bold px-6 py-4 shadow toast-slide">
+            {message}     
+        </div>
+    )
+}
+
+

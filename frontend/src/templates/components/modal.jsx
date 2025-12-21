@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { X, CircleAlert, TriangleAlert } from "lucide-react";
 
 /**
@@ -66,7 +67,7 @@ function Modal({
         error: <X size={20} color="#DC2626" />
     }
 
-    return (
+    const modalContent = (
         <div 
             className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-25 backdrop-blur-xs"
             onClick={handleOverlayClick}
@@ -77,8 +78,7 @@ function Modal({
                 {/* Header */}
                 <div className={`flex items-center justify-between px-4 py-2 ${headerColors[type]}`}>
                     <div className="flex items-center gap-3">
-                        {headerIcons[type]}
-                        <h2 className="text-md font-bold">{title}</h2>
+                        <h2 className="px-2 text-md font-bold">{title}</h2>
                     </div>
                     {showCloseButton && (
                         <button
@@ -105,6 +105,8 @@ function Modal({
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
 
 // Pre-configured alert modals for common use cases
@@ -120,7 +122,7 @@ export function AlertModal({ isOpen, onClose, title, message, type = "info" }) {
                 <div className="flex justify-end">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                        className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                     >
                         OK
                     </button>
@@ -145,7 +147,7 @@ export function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confi
                 <div className="flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+                        className="px-4 py-1 bg-gray-300 text-gray-700 hover:bg-gray-400 transition-colors"
                     >
                         {cancelText}
                     </button>
@@ -154,7 +156,7 @@ export function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confi
                             onConfirm();
                             onClose();
                         }}
-                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                        className="px-4 py-1 bg-red-600 text-white hover:bg-red-700 transition-colors"
                     >
                         {confirmText}
                     </button>

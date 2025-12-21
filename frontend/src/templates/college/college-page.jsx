@@ -6,6 +6,8 @@ import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import supabase from "../../lib/supabaseClient";
 import { getCurrentUser, getCurrentUserId } from "../../lib/auth";
+import Lottie from 'lottie-react';
+import MeteorShower from '../../static/images/Falling Meteor.json';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -181,6 +183,12 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
 
     return (
         <div className="border-l-2 h-full flex flex-col">
+            <Lottie
+                animationData={MeteorShower}
+                loop
+                autoplay
+                className="absolute pointer-events-none -mt-21 opacity-50"
+            />
             <div className="font-bold text-4xl bg-[#18181b] text-white p-6 py-10 text-center"> 
                 College Form
                 <p className="text-sm dont-thin italic">Add new college</p> 
