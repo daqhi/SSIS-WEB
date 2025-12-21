@@ -10,6 +10,7 @@ import { getCurrentUserId } from '../../lib/auth';
 import supabase from '../../lib/supabaseClient';
 import Lottie from 'lottie-react';
 import MeteorShower from '../../static/images/Falling Meteor.json';
+import Modal, { ConfirmModal } from '../components/modal';
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
@@ -25,7 +26,19 @@ export default function ProgramPage() {
     const [editingProgram, setEditingProgram] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [showForm, setShowForm] = useState(false)
-    const toggleForm = () => setShowForm(!showForm)
+    const [toastMessage, setToastMessage] = useState('');
+    const [showToast, setShowToast] = useState(false);
+
+    const toggleForm = () => {
+        // When toggling via the button, always go back to "add" mode
+        setEditingProgram(null);
+        setShowForm((prev) => !prev);
+    }
+
+    const showToastMessage = (message) => {
+        setToastMessage(message);
+        setShowToast(true);
+    }
 
     // Open form if navigated with state
     useEffect(() => {
@@ -62,6 +75,7 @@ export default function ProgramPage() {
                             setEditingProgram(program);
                             setShowForm(true);
                         }}
+                        onShowToast={showToastMessage}
                     />
                 </div>
 
@@ -73,10 +87,17 @@ export default function ProgramPage() {
                                 setEditingProgram(null);
                                 setShowForm(false);
                             }}
+                            onShowToast={showToastMessage}
                         editingProgram={editingProgram}
                     />
                 </div>
             </div>
+            {showToast && (
+                <Toast 
+                    message={toastMessage} 
+                    onClose={() => setShowToast(false)}
+                />
+            )}
             <Footer />
         </div>
     )
@@ -86,12 +107,15 @@ export default function ProgramPage() {
 
 // ===================== PROGRAM FORM ===================== //
 
-function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
+function ProgramForm({ onProgramAdded, onProgramUpdated, onShowToast, editingProgram}) {
     const [collegeCode, setCollegeCode] = useState("");
     const [programCode, setProgramCode] = useState("");
     const [programName, setProgramName] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [colleges, setColleges] = useState([]);
+    const [showAddConfirm, setShowAddConfirm] = useState(false);
+    const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+    const [pendingPayload, setPendingPayload] = useState(null);
 
     // Populate form if editing
     useEffect(() => {
@@ -146,11 +170,6 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
             return;
         }
 
-        if (editingProgram) {
-            const confirmed = window.confirm("Are you sure you want to update program details?")
-            if (!confirmed) return; //cancel update
-        }
-
         const payload = {
             collegecode: collegeCode.trim(),
             programcode: programCode.trim(),
@@ -164,54 +183,89 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
         }
 
         payload.userid = userid;
+        
+        // Defer actual DB operation to confirmation modal
+        setPendingPayload(payload);
+        if (editingProgram) {
+            setShowUpdateConfirm(true);
+        } else {
+            setShowAddConfirm(true);
+        }
+    }
 
+    async function handleConfirmAdd() {
+        if (!pendingPayload) {
+            setShowAddConfirm(false);
+            return;
+        }
+
+        setIsLoading(true);
         try {
-            let res;
-            
-            // ========================= UPDATE PROGRAM ========================= //
+            const { error } = await supabase
+                .from('programs')
+                .insert([pendingPayload]);
 
-            if (editingProgram) {
-                const { error } = await supabase
-                    .from('programs')
-                    .update({
-                        collegecode: payload.collegecode,
-                        programcode: payload.programcode,
-                        programname: payload.programname,
-                    })
-                    .eq('programcode', editingProgram.programcode)
-                    .eq('userid', userid);
-
-                if (error) {
-                    console.error("Error updating program:", error);
-                    alert(error.message || "Failed to update program");
-                    return;
-                }
-
-                alert("Program updated successfully!");
-                onProgramUpdated?.();
-            } else {
-
-                // ========================= ADD NEW PROGRAM ========================= //
-                const { error } = await supabase 
-                    .from('programs')
-                    .insert([payload]);
-
-                    if(error) {
-                        alert(error.message || "Failed to add program");
-                        console.error("Error adding program:", error);
-                        return;
-                    }
-                alert("Program added successfully!");
-                onProgramAdded?.();
+            if (error) {
+                alert(error.message || "Failed to add program");
+                console.error("Error adding program:", error);
+                return;
             }
+
+            onShowToast?.("Program added successfully!");
+            onProgramAdded?.();
 
             // clear form
             setCollegeCode("");
             setProgramName("");
             setProgramCode("");
         } catch (err) {
-            console.error("Error submitting form:", err);
+            console.error("Error adding program:", err);
             alert("Something went wrong. Check console for details.");
+        } finally {
+            setIsLoading(false);
+            setPendingPayload(null);
+            setShowAddConfirm(false);
+        }
+    }
+
+    async function handleConfirmUpdate() {
+        if (!pendingPayload || !editingProgram) {
+            setShowUpdateConfirm(false);
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const { error } = await supabase
+                .from('programs')
+                .update({
+                    collegecode: pendingPayload.collegecode,
+                    programcode: pendingPayload.programcode,
+                    programname: pendingPayload.programname,
+                })
+                .eq('programcode', editingProgram.programcode)
+                .eq('userid', pendingPayload.userid);
+
+            if (error) {
+                console.error("Error updating program:", error);
+                alert(error.message || "Failed to update program");
+                return;
+            }
+
+            onShowToast?.("Program updated successfully!");
+            onProgramUpdated?.();
+
+            // clear form
+            setCollegeCode("");
+            setProgramName("");
+            setProgramCode("");
+        } catch (err) {
+            console.error("Error updating program:", err);
+            alert("Something went wrong. Check console for details.");
+        } finally {
+            setIsLoading(false);
+            setPendingPayload(null);
+            setShowUpdateConfirm(false);
         }
     }
 
@@ -288,6 +342,36 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
                     </div>
                 </form>
             </div>
+
+            {showAddConfirm && (
+                <ConfirmModal
+                    isOpen={showAddConfirm}
+                    onClose={() => {
+                        setShowAddConfirm(false);
+                        setPendingPayload(null);
+                    }}
+                    onConfirm={handleConfirmAdd}
+                    title="Confirm Add"
+                    message={`Are you sure you want to add this program?`}
+                    confirmText="Add"
+                    cancelText="Cancel"
+                />
+            )}
+
+            {showUpdateConfirm && (
+                <ConfirmModal
+                    isOpen={showUpdateConfirm}
+                    onClose={() => {
+                        setShowUpdateConfirm(false);
+                        setPendingPayload(null);
+                    }}
+                    onConfirm={handleConfirmUpdate}
+                    title="Confirm Update"
+                    message={`Are you sure you want to update this program's information?`}
+                    confirmText="Update"
+                    cancelText="Cancel"
+                />
+            )}
         </div>
     )
 }
@@ -297,7 +381,7 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, editingProgram}) {
 
 // ===================== PROGRAM DIRECTORY ===================== //
 
-function ProgramDirectory( {refreshKey, onEditProgram }) {
+function ProgramDirectory( {refreshKey, onEditProgram, onShowToast }) {
     const [programs, setPrograms] = useState([])
     const [searchField, setSearchField] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
@@ -305,6 +389,8 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
     const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [programToDelete, setProgramToDelete] = useState(null);
     
     const rowsPerPage = 10;
 
@@ -444,6 +530,12 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
     }, [refreshKey])
 
 
+    function openDeleteModal(programCode) {
+        setProgramToDelete(programCode);
+        setDeleteModalOpen(true);
+    }
+
+
     function toggleSortCollegeCode() {
         setSortConfig((prev) => {
             const direction = prev.key === 'collegecode' && prev.direction === 'asc' ? 'desc' : 'asc';
@@ -465,10 +557,8 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
         });
     }
 
-    //for deleteiing programs
+    //for deleting programs
     async function handleDelete(programCode) {
-        if (!window.confirm(`Are you sure you want to delete ${programCode}?`)) return;
-
         try {
             const userid = getCurrentUserId();
 
@@ -486,7 +576,7 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                 console.error("Error deleting program:", error);
                 return;
             } else {
-                alert("Program deleted successfully!");
+                onShowToast?.("Program deleted successfully!");
                 setPrograms((prev) => prev.filter((p) => p.programcode !== programCode));
             }
         } catch (err) {
@@ -601,7 +691,7 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                                             <FontAwesomeIcon icon={faPenToSquare} size='xs' color='#000000ff'/>
                                         </button>
                                         
-                                        <button className='delete' onClick={() => handleDelete(p.programcode)}> 
+                                        <button className='delete' onClick={() => openDeleteModal(p.programcode)}> 
                                             <FontAwesomeIcon icon={faTrash} size='xs' color='#FCA311'/> 
                                         </button>
                                     </td>
@@ -638,6 +728,25 @@ function ProgramDirectory( {refreshKey, onEditProgram }) {
                     </div>
                 </div>
             </div>
+            
+            <ConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setProgramToDelete(null);
+                }}
+                onConfirm={() => {
+                    if (programToDelete) {
+                        handleDelete(programToDelete);
+                    }
+                    setDeleteModalOpen(false);
+                    setProgramToDelete(null);
+                }}
+                title="Confirm Delete"
+                message={`Are you sure you want to delete program ${programToDelete}? This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+            />
         </div>
     );
 }
@@ -743,3 +852,21 @@ function AdvancedSearch({ programs, filters, onApply, onClose }) {
         </div>
     )
 }
+
+
+function Toast({ message, onClose }) {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onClose();
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [onClose]);
+
+    return (
+        <div className="fixed bottom-4 right-4 bg-[#18181b] text-white max-w-[300px] font-bold px-6 py-4 shadow toast-slide">
+            {message}
+        </div>
+    )
+}
+

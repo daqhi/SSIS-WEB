@@ -8,6 +8,8 @@ import supabase from "../../lib/supabaseClient";
 import { getCurrentUser, getCurrentUserId } from "../../lib/auth";
 import Lottie from 'lottie-react';
 import MeteorShower from '../../static/images/Falling Meteor.json';
+import Modal, { ConfirmModal } from "../components/modal";
+import "../../static/css/pages.css";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -17,7 +19,19 @@ export default function CollegePage() {
     const [editingCollege, setEditingCollege] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [showForm, setShowForm] = useState(false);
-    const toggleForm = () => setShowForm(!showForm);
+    const [toastMessage, setToastMessage] = useState("");
+    const [showToast, setShowToast] = useState(false);
+
+    const toggleForm = () => {
+        // When toggling via the button, always go back to "add" mode
+        setEditingCollege(null);
+        setShowForm((prev) => !prev);
+    };
+
+    const showToastMessage = (message) => {
+        setToastMessage(message);
+        setShowToast(true);
+    };
 
     // Open form if user navigated with state (from navbar)
     useEffect(() => {
@@ -54,6 +68,7 @@ export default function CollegePage() {
                             setEditingCollege(college);
                             setShowForm(true);
                         }}
+                        onShowToast={showToastMessage}
                     />
                 </div>
 
@@ -65,10 +80,17 @@ export default function CollegePage() {
                                 setEditingCollege(null);
                                 setShowForm(false);
                             }}
+                        onShowToast={showToastMessage}
                         editingCollege={editingCollege}
                     />
                 </div>
             </div>
+            {showToast && (
+                <Toast
+                    message={toastMessage}
+                    onClose={() => setShowToast(false)}
+                />
+            )}
             <Footer />
         </div>
     );
@@ -78,10 +100,13 @@ export default function CollegePage() {
 
 // ===================== COLLEGE FORM ===================== //
 
-function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
+function CollegeForm({ onCollegeAdded, onCollegeUpdated, onShowToast, editingCollege }) {
     const [collegeName, setCollegeName] = useState("");
     const [collegeCode, setCollegeCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [showAddConfirm, setShowAddConfirm] = useState(false);
+    const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+    const [pendingPayload, setPendingPayload] = useState(null);
 
     // Populate form fields if editing
     useEffect(() => {
@@ -97,20 +122,10 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
     // Add or Update handler
     async function handleSubmit(e) {
         e.preventDefault();
-        setIsLoading(true);
 
         if (!collegeName || !collegeCode) {
             alert("All fields are required!");
-            setIsLoading(false);
             return;
-        }
-
-        if (editingCollege) {
-            const confirmed = window.confirm("Are you sure you want to update college details?");
-            if (!confirmed) {
-                setIsLoading(false);
-                return;
-            }
         }
 
         const payload = {
@@ -121,63 +136,90 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
         const userid = getCurrentUserId();
         if (!userid) {
             alert("You must be logged in to perform this action.");
-            setIsLoading(false);
             return;
         }
 
         payload.userid = userid;
+        
+        // Defer actual DB operation to confirmation modal
+        setPendingPayload(payload);
+        if (editingCollege) {
+            setShowUpdateConfirm(true);
+        } else {
+            setShowAddConfirm(true);
+        }
+    }
 
+    async function handleConfirmAdd() {
+        if (!pendingPayload) {
+            setShowAddConfirm(false);
+            return;
+        }
+
+        setIsLoading(true);
         try {
-            let res;
-
-            // ========================= UPDATE COLLEGE ========================= //
-            if (editingCollege) {
-                const { error } = await supabase
-                    .from('colleges')
-                    .update({
-                        collegecode: payload.collegecode,
-                        collegename: payload.collegename,
-                    })
-                    .eq("collegecode", editingCollege.collegecode)
-                    .eq('userid', userid);
-
-                if (error) {
-                    alert(error.message || "Failed to update college");
-                    setIsLoading(false);
-                    throw new Error(error.message);
-                }
-
-                alert("College updated successfully!");
-                onCollegeUpdated?.();
-
-            } else {
-
-            // ========================= ADD NEW COLLEGE ========================= //
-            const { error } = await supabase 
+            const { error } = await supabase
                 .from('colleges')
-                .insert([payload]);
+                .insert([pendingPayload]);
 
-                if (error) {
-                    alert(error.message || "Failed to add college");
-                    console.error("Supabase insert error:", error);
-                    setIsLoading(false);
-                    throw new Error(error.message);
-                }
-
-                alert("College added successfully!");
-                onCollegeAdded?.();
+            if (error) {
+                alert(error.message || "Failed to add college");
+                console.error("Supabase insert error:", error);
+                return;
             }
+
+            onShowToast?.("College added successfully!");
+            onCollegeAdded?.();
 
             // Clear form
             setCollegeCode("");
             setCollegeName("");
-
         } catch (err) {
             console.error("Error submitting form:", err);
             alert("Something went wrong. Check console.");
+        } finally {
+            setIsLoading(false);
+            setPendingPayload(null);
+            setShowAddConfirm(false);
+        }
+    }
+
+    async function handleConfirmUpdate() {
+        if (!pendingPayload || !editingCollege) {
+            setShowUpdateConfirm(false);
+            return;
         }
 
-        setIsLoading(false);
+        setIsLoading(true);
+        try {
+            const { error } = await supabase
+                .from('colleges')
+                .update({
+                    collegecode: pendingPayload.collegecode,
+                    collegename: pendingPayload.collegename,
+                })
+                .eq("collegecode", editingCollege.collegecode)
+                .eq('userid', pendingPayload.userid);
+
+            if (error) {
+                alert(error.message || "Failed to update college");
+                throw new Error(error.message);
+            }
+
+            onShowToast?.("College updated successfully!");
+            onCollegeUpdated?.();
+
+            // Clear form
+            setCollegeCode("");
+            setCollegeName("");
+        } catch (err) {
+            console.error("Error submitting form:", err);
+            alert("Something went wrong. Check console.");
+        } finally {
+            setIsLoading(false);
+            setPendingPayload(null);
+            setShowUpdateConfirm(false);
+        }
     }
 
 
@@ -224,11 +266,41 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
 
                     <div className="add-button-container">
                         <button type="submit" className="add-college">
-                            Submit
+                            {isLoading ? 'Submitting...' : 'Submit'}
                         </button>
                     </div>
                 </form>
             </div>
+
+            {showAddConfirm && (
+                <ConfirmModal
+                    isOpen={showAddConfirm}
+                    onClose={() => {
+                        setShowAddConfirm(false);
+                        setPendingPayload(null);
+                    }}
+                    onConfirm={handleConfirmAdd}
+                    title="Confirm Add"
+                    message={`Are you sure you want to add this college?`}
+                    confirmText="Add"
+                    cancelText="Cancel"
+                />
+            )}
+
+            {showUpdateConfirm && (
+                <ConfirmModal
+                    isOpen={showUpdateConfirm}
+                    onClose={() => {
+                        setShowUpdateConfirm(false);
+                        setPendingPayload(null);
+                    }}
+                    onConfirm={handleConfirmUpdate}
+                    title="Confirm Update"
+                    message={`Are you sure you want to update this college's information?`}
+                    confirmText="Update"
+                    cancelText="Cancel"
+                />
+            )}
         </div>
     );
 }
@@ -237,7 +309,7 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, editingCollege }) {
 
 // ===================== COLLEGE DIRECTORY ===================== //
 
-function CollegeDirectory({ refreshKey, onEditCollege }) {
+function CollegeDirectory({ refreshKey, onEditCollege, onShowToast }) {
     const [colleges, setColleges] = useState([]);
     const [sortOrder, setSortOrder] = useState("asc");
     const [currentPage, setCurrentPage] = useState(1);
@@ -245,6 +317,8 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
     const [searchField, setSearchField] = useState('all');
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [collegeToDelete, setCollegeToDelete] = useState(null);
     // const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
     const indexOfLast = currentPage * rowsPerPage;
     const indexOfFirst = indexOfLast - rowsPerPage;
@@ -294,6 +368,11 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
         loadColleges();
     }, [refreshKey]);
 
+    function openDeleteModal(collegeCode) {
+        setCollegeToDelete(collegeCode);
+        setDeleteModalOpen(true);
+    }
+
     function toggleSortCollegeCode() {
         const sorted = [...colleges].sort((a, b) => {
             return sortOrder === "asc"
@@ -319,8 +398,6 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
 
     // Delete college
     async function handleDelete(collegeCode) {
-        if (!window.confirm(`Are you sure you want to delete ${collegeCode}?`)) return;
-
         try {
             const userid = getCurrentUserId();
 
@@ -337,7 +414,7 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
             if (error) {
                 alert("Failed to delete college.");
             } else {
-                alert("College deleted successfully!");
+                onShowToast?.("College deleted successfully!");
                 setColleges((prev) => prev.filter((c) => c.collegecode !== collegeCode));
             }
         } catch (err) {
@@ -452,7 +529,7 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                                         </button>
                                         <button
                                             className="delete"
-                                            onClick={() => handleDelete(c.collegecode)}
+                                            onClick={() => openDeleteModal(c.collegecode)}
                                         >
                                             <FontAwesomeIcon icon={faTrash} size="xs" color="#FCA311" />
                                         </button>
@@ -483,6 +560,42 @@ function CollegeDirectory({ refreshKey, onEditCollege }) {
                     </div>
                 </div>
             </div>
+            
+            <ConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setCollegeToDelete(null);
+                }}
+                onConfirm={() => {
+                    if (collegeToDelete) {
+                        handleDelete(collegeToDelete);
+                    }
+                    setDeleteModalOpen(false);
+                    setCollegeToDelete(null);
+                }}
+                title="Confirm Delete"
+                message={`Are you sure you want to delete college ${collegeToDelete}? This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+            />
+        </div>
+    );
+}
+
+
+function Toast({ message, onClose }) {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onClose();
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [onClose]);
+
+    return (
+        <div className="fixed bottom-4 right-4 bg-[#18181b] text-white max-w-[300px] font-bold px-6 py-4 shadow toast-slide">
+            {message}
         </div>
     );
 }

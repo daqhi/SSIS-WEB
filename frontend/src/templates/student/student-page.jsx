@@ -9,7 +9,7 @@ import '../../static/css/pages.css'
 import Navbar from "../components/navbar"
 import Footer from "../components/footer"
 import supabase from "../../lib/supabaseClient";
-import Modal, { AlertModal, ConfirmModal } from '../components/modal';
+import Modal, { ConfirmModal } from '../components/modal';
 import Lottie from 'lottie-react';
 import MeteorShower from '../../static/images/Falling Meteor.json';
 
@@ -410,7 +410,7 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
     }
 
     return (
-        <div className='border-l-2 h-full shadow-[-10px_0px_15px_rgba(10,10,10,0.7)]'>
+        <div className='border-l-2 h-full'>
             <Lottie
                 animationData={MeteorShower}
                 loop
@@ -605,6 +605,8 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
     const [searchKeyword, setSearchKeyword] = useState('');
     const [searchField, setSearchField] = useState('all');
     const [activeFilters, setActiveFilters] = useState(() => createEmptyFilters());
+    const [toastMessage, setToastMessage] = useState('');
+    const [showToast, setShowToast] = useState(false);
 
     //for pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -805,6 +807,8 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
 
             setAllStudents((prev) => prev.filter((s) => s.idnum !== idNum));
             setStudents((prev) => prev.filter((s) => s.idnum !== idNum));
+            setToastMessage('Student deleted successfully!');
+            setShowToast(true);
         } catch (err) {
             console.error('Error deleting student:', err);
             alert('An error occurred while deleting.');
@@ -1055,6 +1059,12 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                 confirmText="Delete"
                 cancelText="Cancel"
             />
+            {showToast && (
+                <Toast 
+                    message={toastMessage} 
+                    onClose={() => setShowToast(false)}
+                />
+            )}
         </div>
     );
 }
