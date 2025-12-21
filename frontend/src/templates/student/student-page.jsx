@@ -149,9 +149,14 @@ export default function StudentPage() {
                                         <CalendarClock size={"20"} strokeWidth={'2'}/>
                                         History
                                     </h1>
-                                    <div className="flex flex-row text-sm">
-                                        <div>
-                                            <h1>Added on {selectedStudent?.created_on ? new Date(selectedStudent.created_on).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</h1>
+                                    <div className="flex flex-col text-sm">
+                                        <div className='flex flex-row'>
+                                            <h1 className='w-2/5'>Added on</h1>
+                                            <h1>{selectedStudent?.created_on ? new Date(selectedStudent.created_on).toLocaleDateString('en-PH', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</h1>
+                                        </div>
+                                        <div className='flex flex-row'>
+                                            <h1 className='w-2/5'>Updated on</h1>
+                                            <h1>{selectedStudent?.updated_on ? new Date(selectedStudent.updated_on).toLocaleDateString('en-PH', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</h1>
                                         </div>
                                     </div>
                                 </div>
@@ -373,7 +378,8 @@ function StudentForm({ onStudentAdded, onStudentUpdated, editingStudent}) {
                     sex: pendingPayload.sex,
                     yearlevel: pendingPayload.yearlevel,
                     programcode: pendingPayload.programcode,
-                    collegecode: pendingPayload.collegecode
+                    collegecode: pendingPayload.collegecode,
+                    updated_on: new Date().toISOString()
                 })
                 .eq('idnum', editingStudent.idnum)
                 .eq('userid', pendingPayload.userid);
@@ -626,6 +632,14 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
         setDeleteModalOpen(true);
     }
 
+    const getRelevantTime = (student) => {
+        const raw = student.updated_on || student.created_on;
+        if (!raw) return 0;
+
+        const parsed = new Date(raw);
+        return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+    };
+
     //for loading students SUPABASE
     useEffect(() => {
         const loadStudents = async () => {
@@ -653,8 +667,13 @@ function StudentDirectory( {refreshKey, onEditStudent, onToggleStudentDetails })
                     collegecode: student.collegecode || student.programs?.collegecode || null
                 }));
 
-                setAllStudents(studentsWithCollege);
-                setStudents(studentsWithCollege);
+                // Sort by latest activity: updated_on (if present) or created_on
+                const sortedByRecent = [...studentsWithCollege].sort(
+                    (a, b) => getRelevantTime(b) - getRelevantTime(a)
+                );
+
+                setAllStudents(sortedByRecent);
+                setStudents(sortedByRecent);
             } catch (err) {
                 console.error('Unexpected error:', err);
             }

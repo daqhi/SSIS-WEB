@@ -160,7 +160,10 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, onShowToast, editingCol
         try {
             const { error } = await supabase
                 .from('colleges')
-                .insert([pendingPayload]);
+                .insert([{ 
+                    ...pendingPayload,
+                    updated_on: new Date().toISOString(),
+                }]);
 
             if (error) {
                 alert(error.message || "Failed to add college");
@@ -197,6 +200,7 @@ function CollegeForm({ onCollegeAdded, onCollegeUpdated, onShowToast, editingCol
                 .update({
                     collegecode: pendingPayload.collegecode,
                     collegename: pendingPayload.collegename,
+                    updated_on: new Date().toISOString(),
                 })
                 .eq("collegecode", editingCollege.collegecode)
                 .eq('userid', pendingPayload.userid);

@@ -96,7 +96,7 @@ export default function Dashboard() {
     return (
         <div>
             <Navbar />
-            <div className="mx-20 my-7">
+            <div className="mx-20 my-7 h-[740px]">
                 {/* HEADER */}
                 <div className='bg-gradient-to-r from-[#18181b] via-[#18181b] to-[#1e2b38] flex flex-row mx-5 justify-between items-stretch relative'>
                     <Snowfall

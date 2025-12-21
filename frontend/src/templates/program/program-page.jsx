@@ -203,7 +203,10 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, onShowToast, editingPro
         try {
             const { error } = await supabase
                 .from('programs')
-                .insert([pendingPayload]);
+                .insert([{ 
+                    ...pendingPayload,
+                    updated_on: new Date().toISOString(),
+                }]);
 
             if (error) {
                 alert(error.message || "Failed to add program");
@@ -242,6 +245,7 @@ function ProgramForm({ onProgramAdded, onProgramUpdated, onShowToast, editingPro
                     collegecode: pendingPayload.collegecode,
                     programcode: pendingPayload.programcode,
                     programname: pendingPayload.programname,
+                    updated_on: new Date().toISOString(),
                 })
                 .eq('programcode', editingProgram.programcode)
                 .eq('userid', pendingPayload.userid);
