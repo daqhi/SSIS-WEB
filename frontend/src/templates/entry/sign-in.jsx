@@ -4,6 +4,7 @@ import { CircleUser, Lock } from 'lucide-react';
 import "../../static/css/entry.css";
 import supabase from "../../lib/supabaseClient";
 import bcrypt from 'bcryptjs';
+import { logout } from "../../lib/auth";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
@@ -21,6 +22,9 @@ export default function SignIn() {
     async function handleSupabaseSignIn(e) {
         e.preventDefault();
         setIsLoading(true);
+
+        // Clear any previous session
+        logout();
 
         if (!username || !password) {
             alert("Please enter both username and password.");

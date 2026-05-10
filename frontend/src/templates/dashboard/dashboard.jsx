@@ -99,7 +99,7 @@ export default function Dashboard() {
             <div className="mx-20 my-7 h-[740px]">
                 {/* HEADER */}
                 <div className='bg-gradient-to-r from-[#18181b] via-[#18181b] to-[#1e2b38] flex flex-row mx-5 justify-between items-stretch relative'>
-                    <Snowfall
+                    {/*<Snowfall
                         color="#cdcdcd"
                         animationSpeed={3}
                         snowflakeCount={120}
@@ -107,7 +107,7 @@ export default function Dashboard() {
                             filter: 'blur(4px)',
                             pointerEvents: 'none',
                         }}
-                    />
+                    /> */}
                     <div className='leading-15 pl-8 py-10 flex flex-col justify-center w-3/4'>
                         <div>
                             <GradientText
@@ -122,14 +122,6 @@ export default function Dashboard() {
                         <div>
                             <h3 className="mx-3 mt-3 text-gray-200 pb-4 leading-none">Manage, track, and simplify your academic data in one place.  </h3>
                         </div>
-                    </div>
-                    <div className="mr-10 relative flex-1 flex items-end">
-                        <Lottie
-                            animationData={Reindeer}
-                            loop
-                            autoplay
-                            className="w-48 h-48 absolute bottom-0 right-0"
-                        />
                     </div>
                 </div>
 
